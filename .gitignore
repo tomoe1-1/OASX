@@ -1,0 +1,18 @@
+# ── 运行时产物 ──────────────────────────────────────────
+# OASX 本地运行日志（含本机绝对路径，不随源码分发）
+logs/
+
+# ── 通用忽略 ────────────────────────────────────────────
+# 但本项目是 Flutter 发布产物，运行必需的 exe / dll / so 必须入库（见下方例外）
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 例外：发布产物中的运行必需文件（用 ! 反向豁免）
+!oasx.exe
+!OASInputRecorder/OASInputRecorder.exe
+!data/*.so
