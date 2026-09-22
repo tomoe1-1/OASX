@@ -5,6 +5,10 @@
 
 本仓库发布的是**可直接运行的发布产物**（release build），不是构建源码。
 
+- 当前版本：**v0.3.14**
+- 产物来源：上游 [`xylolit-mu/OASX`](https://github.com/xylolit-mu/OASX)（fork 自 `AzurTian/OASX`）
+  的 Windows 发布包，逐文件 SHA256 校验后同步，未做任何改动
+
 ## 目录结构
 
 ```

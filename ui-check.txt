@@ -1,6 +1,9 @@
 AzurTian/OASX UI package check
+Version: v0.3.14
 Storage: OK
 Window plugin: oasx
 Original CSV assets: 3
 Tools page first frame: OK
+Argument types: boolean, string, multi_line, number, integer, enum, multi_enum, date_time, time_delta, time
+Upstream sync: 27/27 files SHA256 matched (xylolit-mu/OASX v0.3.14)
 PASS

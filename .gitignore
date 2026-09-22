@@ -2,6 +2,14 @@
 # OASX 本地运行日志（含本机绝对路径，不随源码分发）
 logs/
 
+# ── 本机工作目录（备份 / 临时脚本 / 上游包，不入库）──────
+.workbuddy/
+
+# ── 本地录制的操作记录（个人数据，不入库）───────────────
+# 仅保留界面内置的示例 CSV（data/ 下的 assets/records/），
+# OASInputRecorder/Records/ 下的为使用者本机录制结果
+OASInputRecorder/Records/
+
 # ── 通用忽略 ────────────────────────────────────────────
 # 但本项目是 Flutter 发布产物，运行必需的 exe / dll / so 必须入库（见下方例外）
 *.log
