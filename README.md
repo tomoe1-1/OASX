@@ -4,10 +4,14 @@
 基于 Flutter Windows 构建。
 
 本仓库发布的是**可直接运行的发布产物**（release build），不是构建源码。
+源码仓库为本分支 `self`，每个版本由 `flutter build windows --release` 构建产出。
 
-- 当前版本：**v0.3.14**
-- 产物来源：上游 [`xylolit-mu/OASX`](https://github.com/xylolit-mu/OASX)（fork 自 `AzurTian/OASX`）
-  的 Windows 发布包，逐文件 SHA256 校验后同步，未做任何改动
+- 当前版本：**v1.0.0**（首个自构建正式版）
+- 产物来源：由本分支源码构建，构建工具链 Flutter 3.47.5 / Dart 3.13.4
+- 应用内「检查更新」指向本仓库 releases，**不会**被上游发版覆盖
+
+> v0.3.14 及更早：同步自上游 [`xylolit-mu/OASX`](https://github.com/xylolit-mu/OASX)
+> 的 Windows 发布包，逐文件 SHA256 校验后镜像，未做改动。
 
 ## 目录结构
 
@@ -53,11 +57,14 @@ OASX/
 ## 状态自检
 
 ```
-AzurTian/OASX UI package check
+OASX UI package check
+Version: v1.0.0
 Storage: OK
 Window plugin: oasx
 Original CSV assets: 3
 Tools page first frame: OK
+Design tokens: spacing / radii / motion / type-scale / semantic-colors / surfaces
+Reduce-motion respected: YES
 PASS
 ```
 

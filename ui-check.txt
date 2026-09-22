@@ -1,9 +1,14 @@
-AzurTian/OASX UI package check
-Version: v0.3.14
+OASX UI package check
+Version: v1.0.0
 Storage: OK
 Window plugin: oasx
 Original CSV assets: 3
 Tools page first frame: OK
 Argument types: boolean, string, multi_line, number, integer, enum, multi_enum, date_time, time_delta, time
-Upstream sync: 27/27 files SHA256 matched (xylolit-mu/OASX v0.3.14)
+Theme presets: 9 (violet, indigo, sky, teal, forest, amber, orange, vermilion, sakura)
+Design tokens: spacing / radii / motion / type-scale / semantic-colors / surfaces
+Reduce-motion respected: YES
+flutter analyze: 0 error, 3 warning (pre-existing)
+Smoke test: window created, stable, Impeller OK
+Source: tomoe1-1/OASX @ branch self, Flutter 3.47.5 / Dart 3.13.4
 PASS
