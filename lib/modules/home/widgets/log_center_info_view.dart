@@ -96,14 +96,17 @@ class LogCenterInfoView extends StatelessWidget {
         child: ListView.builder(
           key: ValueKey<String>('log-info-${controller.scriptName}'),
           controller: scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xsPlus),
           itemCount: controller.lines.length,
           itemBuilder: (context, index) {
-            return LogCenterLogText(
-              line: controller.lines[index].text,
-              maxLines: wrapLines ? null : 1,
-              overflow: wrapLines ? TextOverflow.clip : TextOverflow.visible,
-              softWrap: wrapLines,
+            // 日志行重绘频繁，隔离到各自图层，避免整列表跟着重绘。
+            return RepaintBoundary(
+              child: LogCenterLogText(
+                line: controller.lines[index].text,
+                maxLines: wrapLines ? null : 1,
+                overflow: wrapLines ? TextOverflow.clip : TextOverflow.visible,
+                softWrap: wrapLines,
+              ),
             );
           },
         ),

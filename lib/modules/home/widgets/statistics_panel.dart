@@ -6,6 +6,7 @@ import 'package:oasx/modules/home/widgets/statistics_detail_section.dart';
 import 'package:oasx/modules/home/widgets/statistics_formatters.dart';
 import 'package:oasx/modules/home/widgets/statistics_history_chart.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 const _kStatisticsPanelHorizontalPadding = 12.0;
 const _kStatisticsPanelSectionSpacing = 12.0;
@@ -41,12 +42,7 @@ class ScriptStatisticsPanel extends StatelessWidget {
       final detailRuns = controller.selectedHistoryDetailRuns;
       final canSortByTime = controller.canSortByTime;
       return ListView(
-        padding: const EdgeInsets.fromLTRB(
-          _kStatisticsPanelHorizontalPadding,
-          _kStatisticsPanelSectionSpacing,
-          _kStatisticsPanelHorizontalPadding,
-          _kStatisticsPanelSectionSpacing,
-        ),
+        padding: const EdgeInsets.fromLTRB(_kStatisticsPanelHorizontalPadding, _kStatisticsPanelSectionSpacing, _kStatisticsPanelHorizontalPadding, _kStatisticsPanelSectionSpacing, ),
         children: [
           _HeaderSection(
             statistics: statistics,
@@ -225,6 +221,9 @@ class _HeaderFiltersRow extends StatelessWidget {
         ),
         IconButton(
           onPressed: controller.toggleHistorySortDirection,
+          tooltip: controller.historySortDescending.value
+              ? I18n.homeStatsSortAscending.tr
+              : I18n.homeStatsSortDescending.tr,
           icon: Icon(
             controller.historySortDescending.value
                 ? Icons.arrow_downward_rounded
@@ -250,7 +249,7 @@ class _StatusIcon extends StatelessWidget {
         height: 34,
         decoration: BoxDecoration(
           color: _statusTone(context).withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(Radii.pill),
           border: Border.all(
             color: _statusTone(context).withValues(alpha: 0.3),
           ),
@@ -309,12 +308,13 @@ class _StatusIcon extends StatelessWidget {
     if (controller.lastErrorMessage.value.isNotEmpty ||
         controller.connectionState.value ==
             ScriptStatisticsConnectionState.error) {
-      return scheme.error;
+      return SemanticColors.danger(context);
     }
     if (controller.isTodaySelected &&
         controller.connectionState.value ==
             ScriptStatisticsConnectionState.connected) {
-      return Colors.teal;
+      // 「已连接且在看今天」= 数据新鲜，用成功语义色而非任意一个青色。
+      return SemanticColors.success(context);
     }
     return scheme.primary;
   }
@@ -337,7 +337,7 @@ class _ChartCard extends StatelessWidget {
       final loading = controller.historyChartLoading.value;
       return Card(
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Spacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -347,7 +347,7 @@ class _ChartCard extends StatelessWidget {
                 if (loading) ...[
                   const Center(
                     child: Padding(
-                      padding: EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.only(bottom: Spacing.md),
                       child: CircularProgressIndicator(strokeWidth: 2.4),
                     ),
                   ),
@@ -368,7 +368,7 @@ class _ChartCard extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 14),
+              const SizedBox(height: Spacing.mdPlus),
               ScriptStatisticsDetailSection(
                 taskName: controller.selectedTaskName.value,
                 runs: detailRuns,
@@ -504,7 +504,7 @@ class _StatisticsPopupSelector<T> extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: _kStatisticsDropdownHorizontalPadding,
-                vertical: 10,
+                vertical: Spacing.smPlus,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -516,7 +516,7 @@ class _StatisticsPopupSelector<T> extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: Spacing.xsPlus),
                   const Icon(Icons.arrow_drop_down_rounded, size: 20),
                 ],
               ),
@@ -560,7 +560,7 @@ class _StatisticsPopupSelector<T> extends StatelessWidget {
                 ),
               ),
               if (option.value == resolvedOption.value) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sm),
                 Icon(
                   Icons.check_rounded,
                   size: 18,
@@ -642,7 +642,7 @@ class _StatisticsPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -652,7 +652,7 @@ class _StatisticsPlaceholder extends StatelessWidget {
                 height: 28,
                 child: CircularProgressIndicator(strokeWidth: 2.6),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Spacing.mdPlus),
             ],
             Text(
               label,
@@ -660,7 +660,7 @@ class _StatisticsPlaceholder extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (message.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sm),
               Text(
                 message,
                 textAlign: TextAlign.center,

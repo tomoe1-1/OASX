@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:oasx/modules/home/models/script_statistics_models.dart';
 import 'package:oasx/modules/home/widgets/statistics_formatters.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Task execution detail list rendered below the chart.
 class ScriptStatisticsDetailSection extends StatelessWidget {
@@ -33,7 +34,7 @@ class ScriptStatisticsDetailSection extends StatelessWidget {
           '${I18n.homeStatsRunDetails.tr}: ${taskName.tr}',
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Spacing.smPlus),
         if (runs.isEmpty)
           _DetailPlaceholder(label: I18n.homeStatsTaskDetailEmpty.tr)
         else
@@ -63,9 +64,9 @@ class _DetailPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.mdPlus, vertical: Spacing.lgPlus),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: Theme.of(context).colorScheme.outlineVariant,
         ),
@@ -92,17 +93,17 @@ class _RunCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = statisticsTaskColor(taskName);
+    final color = statisticsTaskColor(context, taskName);
     final scheme = Theme.of(context).colorScheme;
     final hasBattle = run.battleCount > 0;
     return Card(
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         side: BorderSide(color: scheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(Spacing.mdPlus),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -112,7 +113,7 @@ class _RunCard extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(Radii.pill),
               ),
               child: Text(
                 '$serialNumber',
@@ -122,7 +123,7 @@ class _RunCard extends StatelessWidget {
                     ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +134,7 @@ class _RunCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: Spacing.xsPlus),
                   Text(
                     hasBattle
                         ? '${I18n.homeStatsBattleCount.tr}: ${run.battleCount}  ·  '
@@ -147,7 +148,7 @@ class _RunCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.md),
             Text(
               formatStatisticsDuration(run.durationSeconds),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(

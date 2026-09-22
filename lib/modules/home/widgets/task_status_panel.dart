@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/widgets/task_status_row.dart';
@@ -67,7 +68,7 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
       return Column(
         children: [
           _buildSearchField(),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.md),
           Expanded(
             child: visibleTasks.isEmpty
                 ? Center(child: Text(_emptyMessage))
@@ -76,7 +77,7 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                     controller: _scrollController,
                     padding: EdgeInsets.zero,
                     itemCount: visibleTasks.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.smPlus),
                     itemBuilder: (context, index) {
                       final task = visibleTasks[index];
                       return TaskStatusRow(

@@ -11,7 +11,7 @@ extension _HomeViewActions on _HomeViewState {
         return _buildConnectionFailedView();
       }
       return Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: ConfigWorkbench(
           controller: controller,
           scriptService: scriptService,
@@ -27,7 +27,7 @@ extension _HomeViewActions on _HomeViewState {
   Widget _buildConnectionFailedView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -45,7 +45,7 @@ extension _HomeViewActions on _HomeViewState {
                 color: Theme.of(context).colorScheme.outline,
               );
             }),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.md),
             Text(
               I18n.homeConnectionRetryHint.tr,
               textAlign: TextAlign.center,

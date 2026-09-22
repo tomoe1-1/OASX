@@ -7,6 +7,17 @@
 
 # The following line activates a set of recommended lints for Flutter apps,
 # packages, and plugins designed to encourage good coding practices.
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+    # 本地工作脚本与旧版本备份不属于待编译源码
+    - .workbuddy/**
 include: package:flutter_lints/flutter.yaml
 
 linter:

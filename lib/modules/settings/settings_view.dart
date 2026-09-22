@@ -11,6 +11,7 @@ import 'package:oasx/modules/settings/system_card.dart';
 import 'package:oasx/modules/settings/user_card.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({
@@ -25,7 +26,7 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  static const double _layoutSpacing = 8.0;
+  static const double _layoutSpacing = Spacing.md;
   static const double _wideLayoutBreakpoint = 960.0;
   static const double _navWidth = 220.0;
   static const double _topAlignmentTolerance = 12.0;
@@ -85,7 +86,11 @@ class _SettingsViewState extends State<SettingsView> {
           final settingList = _buildSettingList(keyboardInset);
 
           if (!isWide) {
-            return settingList.paddingOnly(left: 8, right: 8, top: 8);
+            return settingList.paddingOnly(
+              left: Spacing.sm,
+              right: Spacing.sm,
+              top: Spacing.sm,
+            );
           }
 
           return Row(
@@ -95,7 +100,7 @@ class _SettingsViewState extends State<SettingsView> {
               const SizedBox(width: _layoutSpacing),
               Expanded(child: settingList),
             ],
-          ).paddingOnly(left: 8, right: 8, top: 8);
+          ).paddingOnly(left: Spacing.sm, right: Spacing.sm, top: Spacing.sm);
         },
       ),
     );
@@ -192,8 +197,8 @@ class _SettingsViewState extends State<SettingsView> {
     _isAutoScrolling = true;
     await Scrollable.ensureVisible(
       targetContext,
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeInOutCubic,
+      duration: Motion.of(context, Motion.slow),
+      curve: Motion.emphasized,
       alignment: 0,
     );
     _isAutoScrolling = false;
@@ -239,45 +244,70 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Widget _buildPrimaryNav() {
+    final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: _navWidth,
       child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.zero,
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(Spacing.sm),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: List.generate(_sections.length, (index) {
               final isSelected = index == _selectedSectionIndex;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: Spacing.xs),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: Radii.smRadius,
                   onTap: () => _scrollToSection(index),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
+                    duration: Motion.of(context, Motion.normal),
+                    curve: Motion.standard,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+                      horizontal: Spacing.md,
+                      vertical: Spacing.smPlus,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: Radii.smRadius,
                       color: isSelected
-                          ? Theme.of(context)
-                              .colorScheme
-                              .secondaryContainer
-                              .withValues(alpha: 0.38)
+                          ? scheme.secondaryContainer.withValues(alpha: 0.45)
                           : Colors.transparent,
                     ),
-                    child: Text(
-                      _sections[index].navTitleBuilder(),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
+                    child: Row(
+                      children: [
+                        AnimatedContainer(
+                          duration: Motion.of(context, Motion.normal),
+                          curve: Motion.standard,
+                          width: 3,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? scheme.primary
+                                : Colors.transparent,
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(Radii.pill),
+                            ),
                           ),
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                        Expanded(
+                          child: Text(
+                            _sections[index].navTitleBuilder(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? scheme.onSecondaryContainer
+                                          : scheme.onSurfaceVariant,
+                                    ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

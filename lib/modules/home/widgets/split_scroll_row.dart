@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:oasx/config/design_tokens.dart';
+
 const _kSplitScrollRowBackgroundKey =
     ValueKey<String>('home-split-scroll-row-background');
 
@@ -70,7 +72,7 @@ class _SplitScrollRowState extends State<SplitScrollRow> {
       trackVisibility: false,
       interactive: false,
       thickness: widget.scrollbarThickness,
-      radius: const Radius.circular(999),
+      radius: const Radius.circular(Radii.pill),
       notificationPredicate: (notification) => notification.depth == 0,
       child: NotificationListener<ScrollMetricsNotification>(
         onNotification: _handleMetricsChanged,

@@ -1,6 +1,7 @@
 class I18n {
   static const String logOut = 'Log out', zhCn = 'zh-CN', enUs = 'en-US';
   static const String changeTheme = 'Change Theme',
+      changeColorSeed = 'Change Color Seed',
       changeLanguage = 'Change Language',
       projectStatement = 'Project Statement';
   static const String year = 'Years', month = 'Months', day = 'Days';
@@ -73,7 +74,10 @@ class I18n {
       deployFileImportFailed = 'deploy_file_import_failed',
       deployFileExportSuccess = 'deploy_file_export_success',
       deployFileExportFailed = 'deploy_file_export_failed',
-      rename = 'Rename';
+      rename = 'Rename',
+      collapse = 'Collapse',
+      expand = 'Expand',
+      more = 'More';
   static const String delete = 'Delete', cancel = 'Cancel', confirm = 'Confirm';
   static const String retry = 'Retry',
       back = 'Back',
@@ -236,6 +240,8 @@ class I18n {
   homeStatsSummaryTotalBattleCount = 'home_stats_summary_total_battle_count';
   static const String homeStatsSortByData = 'home_stats_sort_by_data',
       homeStatsSortByTime = 'home_stats_sort_by_time',
+      homeStatsSortAscending = 'home_stats_sort_ascending',
+      homeStatsSortDescending = 'home_stats_sort_descending',
       homeStatsNoBattle = 'home_stats_no_battle';
   static const String homeTaskFilterAll = 'home_task_filter_all',
       homeTaskFilterEnabled = 'home_task_filter_enabled',

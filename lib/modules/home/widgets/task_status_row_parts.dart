@@ -69,11 +69,11 @@ class _TaskTypeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = switch (type) {
       TaskStatusType.running =>
-        const Icon(Icons.bolt_rounded, color: Colors.green),
+        Icon(Icons.bolt_rounded, color: SemanticColors.success(context)),
       TaskStatusType.pending =>
-        const Icon(Icons.layers_rounded, color: Colors.orange),
+        Icon(Icons.layers_rounded, color: SemanticColors.warning(context)),
       TaskStatusType.waiting =>
-        const Icon(Icons.schedule_rounded, color: Colors.blueGrey),
+        Icon(Icons.schedule_rounded, color: SemanticColors.neutral(context)),
     };
     return SizedBox(width: 28, height: 28, child: Center(child: icon));
   }

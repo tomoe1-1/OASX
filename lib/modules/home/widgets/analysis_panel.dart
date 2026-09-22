@@ -8,6 +8,7 @@ import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/home/models/script_analysis_models.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class ScriptAnalysisPanel extends StatefulWidget {
   const ScriptAnalysisPanel({super.key, required this.scriptName});
@@ -189,10 +190,10 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
       onRefresh: () => _loadAnalysis(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(Spacing.xs),
         children: [
           _toolbar(),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.md),
           if (_error.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 48),
@@ -211,12 +212,12 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
             )
           else ...[
             if (!_errorLogs) _summary(snapshot),
-            if (!_errorLogs) const SizedBox(height: 12),
+            if (!_errorLogs) const SizedBox(height: Spacing.md),
             _pathCard(snapshot),
             if (!_errorLogs) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.md),
               _densityCard(snapshot),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.md),
               _rankingCard(snapshot),
             ],
           ],
@@ -229,7 +230,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
     return Column(children: [
       Row(children: [
         const Text('日志'),
-        const SizedBox(width: 8),
+        const SizedBox(width: Spacing.sm),
         FilterChip(
           label: const Text('错误日志'), selected: _errorLogs,
           onSelected: (value) { _errorLogs = value; _loadDates(); },
@@ -244,10 +245,14 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
           )).toList(),
           onChanged: (value) { if (value == null) return; _errorId = value; _loadAnalysis(); },
         )),
-        IconButton(onPressed: _loadDates, icon: const Icon(Icons.refresh)),
+        IconButton(
+          onPressed: _loadDates,
+          tooltip: I18n.homeConnectionRetryAction.tr,
+          icon: const Icon(Icons.refresh),
+        ),
       ]) else Row(children: [
       const Icon(Icons.calendar_today_outlined, size: 18),
-      const SizedBox(width: 8),
+      const SizedBox(width: Spacing.sm),
       DropdownButton<String>(
         value: _dates.contains(_dateKey) ? _dateKey : null,
         hint: Text(_dateKey),
@@ -259,13 +264,17 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
         },
       ),
       const Spacer(),
-      IconButton(onPressed: _loadAnalysis, icon: const Icon(Icons.refresh)),
+      IconButton(
+        onPressed: _loadAnalysis,
+        tooltip: I18n.homeConnectionRetryAction.tr,
+        icon: const Icon(Icons.refresh),
+      ),
     ]),
     ]);
   }
 
   Widget _summary(ScriptAnalysisSnapshot data) {
-    return Wrap(spacing: 20, runSpacing: 8, children: [
+    return Wrap(spacing: Spacing.xl, runSpacing: Spacing.sm, children: [
       Text('${data.clickCount} ${I18n.homeAnalysisClicks.tr}'),
       Text('${data.randomClickCount} ${I18n.homeAnalysisRandomClicks.tr}'),
       Text('${data.taskCount} ${I18n.homeAnalysisTasks.tr}'),
@@ -275,19 +284,19 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
   Widget _pathCard(ScriptAnalysisSnapshot data) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(I18n.homeAnalysisPathTitle.tr, style: Theme.of(context).textTheme.titleMedium),
-          Wrap(spacing: 8, children: [
+          Wrap(spacing: Spacing.sm, children: [
             FilterChip(label: Text(I18n.homeAnalysisShowClicks.tr), selected: _showClicks, onSelected: (v) => setState(() => _showClicks = v)),
             FilterChip(label: Text(I18n.homeAnalysisShowSwipes.tr), selected: _showSwipes, onSelected: (v) => setState(() => _showSwipes = v)),
             FilterChip(label: Text(I18n.homeAnalysisShowPath.tr), selected: _showPath, onSelected: (v) => setState(() => _showPath = v)),
           ]),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sm),
           AspectRatio(
             aspectRatio: 16 / 9,
             child: DecoratedBox(
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLowest, borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLowest, borderRadius: BorderRadius.circular(Radii.sm)),
               child: CustomPaint(painter: _ActionPathPainter(data.events, _showClicks, _showSwipes, _showPath, Theme.of(context).colorScheme)),
             ),
           ),
@@ -310,7 +319,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
     ];
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: LayoutBuilder(builder: (context, constraints) {
           final meaningless = _titledChart(
             I18n.homeAnalysisDensityTitle.tr,
@@ -346,9 +355,9 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
           if (constraints.maxWidth < 720) {
             return Column(children: [
               meaningless,
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.lg),
               total,
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.lg),
               daily,
             ]);
           }
@@ -356,10 +365,10 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
             return Column(children: [
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Expanded(child: meaningless),
-                const SizedBox(width: 16),
+                const SizedBox(width: Spacing.lg),
                 Expanded(child: total),
               ]),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.lg),
               daily,
             ]);
           }
@@ -367,9 +376,9 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: meaningless),
-              const SizedBox(width: 16),
+              const SizedBox(width: Spacing.lg),
               Expanded(child: total),
-              const SizedBox(width: 16),
+              const SizedBox(width: Spacing.lg),
               Expanded(child: daily),
             ],
           );
@@ -382,7 +391,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.md),
           SizedBox(
             height: 220,
             child: chart ?? Center(child: Text(I18n.homeStatsChartEmpty.tr)),
@@ -410,7 +419,7 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
                 return const SizedBox.shrink();
               }
               return Padding(
-                padding: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.only(top: Spacing.xsPlus),
                 child: Text(
                   bottomLabels[index],
                   style: const TextStyle(fontSize: 9),
@@ -448,20 +457,20 @@ class _ScriptAnalysisPanelState extends State<ScriptAnalysisPanel> {
                   final index = value.toInt();
                   if (index < 0 || index >= shown.length) return const SizedBox.shrink();
                   final text = shown[index].key.tr;
-                  return Padding(padding: const EdgeInsets.only(top: 6), child: Transform.rotate(angle: -math.pi / 5, child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9))));
+                  return Padding(padding: const EdgeInsets.only(top: Spacing.xsPlus), child: Transform.rotate(angle: -math.pi / 5, child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9))));
                 })),
               ),
-              barGroups: [for (var i = 0; i < shown.length; i++) BarChartGroupData(x: i, barRods: [BarChartRodData(toY: shown[i].value.toDouble(), width: 16, borderRadius: const BorderRadius.vertical(top: Radius.circular(4)))])],
+              barGroups: [for (var i = 0; i < shown.length; i++) BarChartGroupData(x: i, barRods: [BarChartRodData(toY: shown[i].value.toDouble(), width: 16, borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.xs)))])],
             )),
     );
   }
 
   Widget _chartCard(String title, Widget chart) => Card(
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Spacing.md),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.md),
             SizedBox(height: 220, child: chart),
           ]),
         ),

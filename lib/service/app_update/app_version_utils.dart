@@ -27,11 +27,14 @@ class AppVersionUtils {
   /// Returns the normalized application version string.
   static Future<String> getCurrentVersion() async {
     if (!kReleaseMode) {
-      return 'v0.0.1';
+      return _kFallbackVersion;
     }
     final packageInfo = await PackageInfo.fromPlatform();
     return 'v${packageInfo.version}'.split('-')[0];
   }
+
+  /// Debug/dev 模式下的版本号，与 `pubspec.yaml` 的 `version:` 手工同步。
+  static const String _kFallbackVersion = 'v1.0.0';
 
   /// Normalizes a semantic version string into integer parts.
   static List<int> _normalizeVersion(String version) {

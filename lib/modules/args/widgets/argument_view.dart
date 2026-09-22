@@ -71,7 +71,7 @@ class _ArgumentViewState extends State<ArgumentView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: title),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.md),
             Expanded(child: form),
           ],
         ).padding(bottom: 8);
@@ -214,9 +214,9 @@ class _ArgumentViewState extends State<ArgumentView> {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       scrollPadding: EdgeInsets.only(
-        left: 12,
-        top: 12,
-        right: 12,
+        left: Spacing.md,
+        top: Spacing.md,
+        right: Spacing.md,
         bottom: keyboardInset > 0 ? keyboardInset + 24 : 24,
       ),
       textInputAction:

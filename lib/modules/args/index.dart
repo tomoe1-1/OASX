@@ -13,6 +13,7 @@ import 'package:flutter_pickers/time_picker/model/pduration.dart';
 import 'package:flutter_pickers/time_picker/model/suffix.dart';
 import 'package:get/get.dart';
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/common/widgets/drag_copy_feedback.dart';
 import 'package:oasx/service/websocket_service.dart';
@@ -86,7 +87,7 @@ class Args extends StatelessWidget {
       final content = LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            padding: const EdgeInsets.fromLTRB(Spacing.smPlus, 0, Spacing.smPlus, Spacing.smPlus),
             child: ConstrainedBox(
               constraints: BoxConstraints(minWidth: constraints.maxWidth),
               child: ExpansionTileGroup(
@@ -107,7 +108,7 @@ class Args extends StatelessWidget {
                           name,
                         ),
                         borderRadius:
-                            const BorderRadius.all(Radius.circular(10)),
+                            const BorderRadius.all(Radius.circular(Radii.sm)),
                         title: <Widget>[
                           if (groupDraggable)
                             _buildGroupDragHandle(
@@ -256,7 +257,7 @@ class ArgsDraftBar extends StatelessWidget {
               },
               child: Text(I18n.cancel.tr),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: Spacing.sm),
             FilledButton.icon(
               onPressed: controller.isSavingDraft.value || dirtyCount == 0
                   ? null
@@ -288,7 +289,7 @@ class ArgsDraftBar extends StatelessWidget {
               label: Text(I18n.argsSaveChanges.tr),
             ),
           ],
-        ).paddingAll(12),
+        ).paddingAll(Spacing.md),
       );
     });
   }

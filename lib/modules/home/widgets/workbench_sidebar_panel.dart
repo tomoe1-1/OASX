@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
+import 'package:oasx/modules/common/widgets/segmented_tab_strip.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
@@ -24,9 +26,14 @@ class WorkbenchSidebarPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Surfaces.panel(context),
+        borderRadius: Radii.cardRadius,
+        border: Border.all(color: Surfaces.divider(context)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Obx(() {
           final tabs = controller.workbenchSidebarTabsFor(
             HomeWorkbenchLayoutMode.threePane,
@@ -37,31 +44,35 @@ class WorkbenchSidebarPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: tabs
-                    .map(
-                      (tab) => ChoiceChip(
-                        label: Text(_tabLabel(tab)),
-                        showCheckmark: false,
-                        selected: currentTab == tab,
-                        onSelected: (_) =>
-                            controller.setActiveWorkbenchSidebarTabValue(tab),
-                      ),
-                    )
-                    .toList(),
+              SegmentedTabStrip<HomeWorkbenchTab>(
+                tabs: tabs,
+                currentTab: currentTab,
+                labelOf: _tabLabel,
+                iconOf: _tabIcon,
+                onSelected: controller.setActiveWorkbenchSidebarTabValue,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.md),
               Expanded(
-                child: switch (currentTab) {
-                  HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
-                  HomeWorkbenchTab.logs =>
-                    LogCenterPanel(scriptName: scriptName),
-                  HomeWorkbenchTab.analysis =>
-                    ScriptAnalysisPanel(scriptName: scriptName),
-                  _ => const SizedBox.shrink(),
-                },
+                child: AnimatedSwitcher(
+                  duration: Motion.of(context, Motion.normal),
+                  switchInCurve: Motion.standard,
+                  switchOutCurve: Motion.standard,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                  child: KeyedSubtree(
+                    key: ValueKey<HomeWorkbenchTab>(currentTab),
+                    child: switch (currentTab) {
+                      HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
+                      HomeWorkbenchTab.logs =>
+                        LogCenterPanel(scriptName: scriptName),
+                      HomeWorkbenchTab.analysis =>
+                        ScriptAnalysisPanel(scriptName: scriptName),
+                      _ => const SizedBox.shrink(),
+                    },
+                  ),
+                ),
               ),
             ],
           );
@@ -77,6 +88,16 @@ class WorkbenchSidebarPanel extends StatelessWidget {
       HomeWorkbenchTab.logs => I18n.log.tr,
       HomeWorkbenchTab.analysis => I18n.homeAnalysisTab.tr,
       _ => '',
+    };
+  }
+
+  /// Resolves an icon for one sidebar tab.
+  IconData? _tabIcon(HomeWorkbenchTab value) {
+    return switch (value) {
+      HomeWorkbenchTab.stats => Icons.insights_rounded,
+      HomeWorkbenchTab.logs => Icons.receipt_long_rounded,
+      HomeWorkbenchTab.analysis => Icons.auto_graph_rounded,
+      _ => null,
     };
   }
 }

@@ -5,6 +5,7 @@ import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/widgets/config_collection_script_label.dart';
 import 'package:oasx/modules/home/widgets/config_collection_task_preview.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class ConfigCollectionTile extends StatelessWidget {
   const ConfigCollectionTile({
@@ -45,66 +46,81 @@ class ConfigCollectionTile extends StatelessWidget {
               (showLinkCheckbox ? 64 : 0);
           final isCompact = constraints.maxWidth < compactThreshold;
           final rowColor = isActive
-              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.24)
-              : theme.cardColor;
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.28)
+              : Colors.transparent;
           final accentColor = _accentColor(
             context,
             controller.scriptCollectionStateFor(script),
           );
-          return Material(
-            color: rowColor,
-            child: InkWell(
-              onTap: isDragCopyLoading ? null : onTap,
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: isCompact ? 8 : 10,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (showLinkCheckbox) ...[
-                      SizedBox(
-                        width: 36,
-                        height: 36,
-                        child: Checkbox(
-                          value: isLinked,
-                          onChanged: (value) => controller.setScriptLinked(
-                            script.name,
-                            value ?? false,
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 1),
+            child: Material(
+              color: rowColor,
+              borderRadius: Radii.smRadius,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: isDragCopyLoading ? null : onTap,
+                child: AnimatedContainer(
+                  duration: Motion.of(context, Motion.fast),
+                  curve: Motion.standard,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Spacing.smPlus,
+                    vertical: isCompact ? Spacing.sm : Spacing.smPlus,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: Radii.smRadius,
+                    border: Border.all(
+                      color: isActive
+                          ? theme.colorScheme.primary.withValues(alpha: 0.35)
+                          : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (showLinkCheckbox) ...[
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: Checkbox(
+                            value: isLinked,
+                            onChanged: (value) => controller.setScriptLinked(
+                              script.name,
+                              value ?? false,
+                            ),
+                            visualDensity: VisualDensity.compact,
                           ),
-                          visualDensity: VisualDensity.compact,
+                        ),
+                        const SizedBox(width: 2),
+                      ],
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            AbsorbPointer(
+                              absorbing: isDragCopyLoading,
+                              child: _ScriptMeta(
+                                script: script,
+                                compact: isCompact,
+                                accentColor: accentColor,
+                                powerButton: _PowerButton(
+                                  onTogglePower: onTogglePower,
+                                ),
+                                popupButton: _ActionMenuButton(
+                                  onRename: onRename,
+                                  onExport: onExport,
+                                  onDelete: onDelete,
+                                ),
+                              ),
+                            ),
+                            if (isDragCopyLoading)
+                              const Positioned.fill(
+                                child: _DragCopyLoadingMask(),
+                              ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 2),
                     ],
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          AbsorbPointer(
-                            absorbing: isDragCopyLoading,
-                            child: _ScriptMeta(
-                              script: script,
-                              compact: isCompact,
-                              accentColor: accentColor,
-                              powerButton: _PowerButton(
-                                onTogglePower: onTogglePower,
-                              ),
-                              popupButton: _ActionMenuButton(
-                                onRename: onRename,
-                                onExport: onExport,
-                                onDelete: onDelete,
-                              ),
-                            ),
-                          ),
-                          if (isDragCopyLoading)
-                            const Positioned.fill(
-                              child: _DragCopyLoadingMask(),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -116,13 +132,13 @@ class ConfigCollectionTile extends StatelessWidget {
 
   Color _accentColor(BuildContext context, HomeScriptStateFilter value) {
     final scheme = Theme.of(context).colorScheme;
-    return switch (value) {
-      HomeScriptStateFilter.running => Colors.green.shade600,
-      HomeScriptStateFilter.stopped => scheme.outline,
-      HomeScriptStateFilter.abnormal => Colors.orange.shade700,
-      HomeScriptStateFilter.offline => Colors.orange.shade700,
-      HomeScriptStateFilter.all => scheme.outline,
-    };
+    return SemanticColors.forState(
+      context,
+      running: value == HomeScriptStateFilter.running,
+      abnormal: value == HomeScriptStateFilter.abnormal,
+      offline: value == HomeScriptStateFilter.offline,
+      fallback: scheme.outline,
+    );
   }
 }
 
@@ -152,7 +168,7 @@ class _ScriptMeta extends StatelessWidget {
               key: ValueKey<String>('config-accent-bar-${script.name}'),
               color: accentColor,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.smPlus),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -161,11 +177,11 @@ class _ScriptMeta extends StatelessWidget {
                   Wrap(
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 4,
+                    spacing: Spacing.xs,
                     runSpacing: 2,
                     children: [powerButton, popupButton],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: Spacing.xs),
                   ConfigCollectionScriptLabel(script: script, centered: true),
                 ],
               ),
@@ -182,14 +198,14 @@ class _ScriptMeta extends StatelessWidget {
             key: ValueKey<String>('config-accent-bar-${script.name}'),
             color: accentColor,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.smPlus),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ConfigCollectionScriptLabel(script: script, centered: false),
-                const SizedBox(height: 6),
+                const SizedBox(height: Spacing.xsPlus),
                 ConfigCollectionTaskPreview(script: script),
               ],
             ),
@@ -212,7 +228,7 @@ class _DragCopyLoadingMask extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.68),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: const Center(
           child: SizedBox(
@@ -240,10 +256,10 @@ class _RegularAccentBar extends StatelessWidget {
         child: FractionallySizedBox(
           heightFactor: 0.8,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: Motion.settleOf(context),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(Radii.pill),
             ),
           ),
         ),
@@ -259,11 +275,14 @@ class _PowerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 视觉尺寸仍是 32，但用 padding 把命中区撑到 40+
+    // （iconSize 23 + padding 2*9 = 41），兼顾紧凑与触屏可点性。
     return IconButton(
       onPressed: onTogglePower,
+      tooltip: I18n.run.tr,
       visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 41, height: 41),
+      padding: const EdgeInsets.all(Spacing.smMid),
       iconSize: 23,
       icon: const Icon(Icons.power_settings_new_rounded),
     );
@@ -283,11 +302,13 @@ class _ActionMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return SizedBox.square(
-      dimension: 32,
+      // 命中区 40，内部图标仍保持 18 的视觉尺寸。
+      dimension: 40,
       child: PopupMenuButton<String>(
         padding: EdgeInsets.zero,
-        tooltip: '',
+        tooltip: I18n.more.tr,
         icon: const Icon(Icons.more_vert_rounded, size: 18),
         onSelected: (value) async {
           if (value == 'rename') {
@@ -303,7 +324,22 @@ class _ActionMenuButton extends StatelessWidget {
         itemBuilder: (context) => [
           PopupMenuItem(value: 'rename', child: Text(I18n.rename.tr)),
           PopupMenuItem(value: 'export', child: Text(I18n.configExport.tr)),
-          PopupMenuItem(value: 'delete', child: Text(I18n.delete.tr)),
+          // 破坏性操作：与上面两项用分隔线隔开，并用错误色着色，
+          // 拉开视觉距离，降低误删概率。
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline_rounded, size: 18, color: scheme.error),
+                const SizedBox(width: Spacing.sm),
+                Text(
+                  I18n.delete.tr,
+                  style: TextStyle(color: scheme.error),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

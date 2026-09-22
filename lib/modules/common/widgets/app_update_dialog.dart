@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/service/app_update/models/app_update_plan.dart';
 import 'package:oasx/service/app_update_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
@@ -54,7 +55,7 @@ class AppUpdateDialog extends StatelessWidget {
       Text(service.downloadProgressLabel.value),
     ].toColumn(
       crossAxisAlignment: CrossAxisAlignment.start,
-      separator: const SizedBox(height: 6),
+      separator: const SizedBox(height: Spacing.xsPlus),
     );
   }
 
@@ -82,11 +83,11 @@ class AppUpdateDialog extends StatelessWidget {
               ),
           ].toRow(
             mainAxisAlignment: MainAxisAlignment.end,
-            separator: const SizedBox(width: 8),
+            separator: const SizedBox(width: Spacing.sm),
           ),
         ].toColumn(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          separator: const SizedBox(height: 12),
+          separator: const SizedBox(height: Spacing.md),
         );
       }),
     ];

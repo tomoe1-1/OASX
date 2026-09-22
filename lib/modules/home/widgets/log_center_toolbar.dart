@@ -20,7 +20,7 @@ class LogCenterToolbar extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: _leadingControls(context)),
-        const SizedBox(width: 8),
+        const SizedBox(width: Spacing.sm),
         _trailingControls(),
       ],
     );
@@ -29,8 +29,8 @@ class LogCenterToolbar extends StatelessWidget {
   /// Builds title and tab switch on the left.
   Widget _leadingControls(BuildContext context) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: Spacing.sm,
+      runSpacing: Spacing.sm,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [_tabSwitch()],
     );
@@ -43,8 +43,8 @@ class LogCenterToolbar extends StatelessWidget {
         return const SizedBox.shrink();
       }
       return Wrap(
-        spacing: 4,
-        runSpacing: 4,
+        spacing: Spacing.xs,
+        runSpacing: Spacing.xs,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           if (_shouldShowWrapAction()) _wrapButton(),

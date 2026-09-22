@@ -9,6 +9,7 @@ import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/widgets/split_scroll_row.dart';
 import 'package:oasx/modules/home/widgets/task_parameter_panel.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class TaskCatalogPanel extends StatefulWidget {
   const TaskCatalogPanel({
@@ -91,7 +92,7 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
     return Column(
       children: [
         _buildToolbar(),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.md),
         Expanded(
           child: FutureBuilder<Map<String, List<String>>>(
             future: _menuFuture,
@@ -120,7 +121,7 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
                 controller: _scrollController,
                 itemCount: sections.length,
                 separatorBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.smPlus),
                   child: Divider(
                     height: 1,
                     thickness: 1,
@@ -173,7 +174,7 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
     return Row(
       children: [
         Expanded(child: searchField),
-        const SizedBox(width: 10),
+        const SizedBox(width: Spacing.smPlus),
         PopupMenuButton<HomeTaskCatalogFilter>(
           tooltip: _filterLabel(_filter),
           initialValue: _filter,
@@ -382,7 +383,7 @@ class _CatalogSectionTitle extends StatelessWidget {
                   : null,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.smPlus),
         ],
         Expanded(
           child: Text(
@@ -391,7 +392,7 @@ class _CatalogSectionTitle extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: Spacing.smPlus),
         Text(
           '${section.tasks.length}',
           style: Theme.of(context).textTheme.labelMedium,
@@ -456,12 +457,12 @@ class _CatalogTaskRow extends StatelessWidget {
       style: Theme.of(context).textTheme.bodyLarge,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
+        duration: Motion.settleOf(context),
         decoration: BoxDecoration(
           color: isDraggingTask ? dragColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: SplitScrollRow(
           scrollKey: PageStorageKey<String>('task-row-scroll-${task.name}'),
@@ -487,7 +488,7 @@ class _CatalogTaskRow extends StatelessWidget {
                 )
               else
                 const SizedBox(width: 22, height: 22),
-              const SizedBox(width: 10),
+              const SizedBox(width: Spacing.smPlus),
               dragEnabled
                   ? Draggable<ConfigDragPayload>(
                       data: payload,
@@ -526,7 +527,7 @@ class _EnableIcon extends StatelessWidget {
         width: 22,
         height: 22,
         child: Padding(
-          padding: const EdgeInsets.all(2),
+          padding: const EdgeInsets.all(Spacing.xxs),
           child: CircularProgressIndicator(
             strokeWidth: 2,
             color: Theme.of(context).colorScheme.primary,
@@ -540,7 +541,7 @@ class _EnableIcon extends StatelessWidget {
         : Icons.radio_button_unchecked_rounded;
     final color = enabled ? scheme.onSurface : scheme.onSurfaceVariant;
     return InkWell(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(Radii.pill),
       onTap: () => onTap(!enabled),
       child: Icon(icon, color: color, size: 22),
     );
@@ -603,7 +604,7 @@ class _CatalogSectionCard extends StatelessWidget {
           ? cardColor
           : scheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.7)),
       ),
       child: Column(
@@ -611,7 +612,7 @@ class _CatalogSectionCard extends StatelessWidget {
           InkWell(
             onTap: forceExpanded ? null : onToggleExpanded,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.mdPlus),
               child: Row(
                 children: [
                   Expanded(
@@ -623,7 +624,7 @@ class _CatalogSectionCard extends StatelessWidget {
                       activeDragPayload: activeDragPayload,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: Spacing.smPlus),
                   Icon(
                     effectiveExpanded
                         ? Icons.expand_less_rounded
@@ -640,7 +641,7 @@ class _CatalogSectionCard extends StatelessWidget {
               color: scheme.outlineVariant.withValues(alpha: 0.45),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.md),
               child: Column(
                 children: [
                   for (

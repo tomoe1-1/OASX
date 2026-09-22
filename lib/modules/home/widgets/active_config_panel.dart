@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
+import 'package:oasx/modules/common/widgets/segmented_tab_strip.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
-import 'package:oasx/modules/home/widgets/config_state_indicator.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
 import 'package:oasx/modules/home/widgets/analysis_panel.dart';
@@ -51,9 +52,14 @@ class ActiveConfigPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Surfaces.panel(context),
+        borderRadius: Radii.cardRadius,
+        border: Border.all(color: Surfaces.divider(context)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Obx(() {
           final script = controller.activeScriptModel;
           final currentTab = controller.displayedWorkbenchTabFor(layoutMode);
@@ -70,78 +76,48 @@ class ActiveConfigPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  if (onBackToScripts != null)
-                    IconButton(
-                      tooltip: I18n.scriptList.tr,
-                      onPressed: onBackToScripts,
-                      icon: const Icon(Icons.arrow_back_rounded),
-                    ),
-                  Expanded(
-                    child: Text(
-                      script.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                  _BulkQuickScheduleButton(
-                    icon: Icons.flash_on_rounded,
-                    tooltip: I18n.homeQuickRunAll.tr,
-                    loading: bulkMode == HomeBulkQuickScheduleMode.runNow,
-                    onPressed: isBulkIdle && hasBulkTasks
-                        ? onBulkQuickRun
-                        : null,
-                  ),
-                  _BulkQuickScheduleButton(
-                    icon: Icons.schedule_rounded,
-                    tooltip: I18n.homeQuickWaitAll.tr,
-                    loading: bulkMode == HomeBulkQuickScheduleMode.waitNow,
-                    onPressed: isBulkIdle && hasBulkTasks
-                        ? onBulkQuickWait
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  ConfigStateIndicator(
-                    state: controller.scriptStateFor(script),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    tooltip: isRunning ? I18n.stop.tr : I18n.run.tr,
-                    onPressed: () => onTogglePower(script.name, !isRunning),
-                    icon: const Icon(Icons.power_settings_new_rounded),
-                  ),
-                  if (onExpandRightSidebar != null) const SizedBox(width: 8),
-                  if (onExpandRightSidebar != null)
-                    IconButton.filledTonal(
-                      key: const ValueKey<String>(
-                        'home-workbench-expand-right-sidebar',
-                      ),
-                      tooltip: I18n.homeRestoreSidebar.tr,
-                      onPressed: onExpandRightSidebar,
-                      icon: const Icon(
-                        Icons.keyboard_double_arrow_left_rounded,
-                      ),
-                    ),
-                ],
+              _HeaderBar(
+                script: script,
+                isRunning: isRunning,
+                isBulkIdle: isBulkIdle,
+                hasBulkTasks: hasBulkTasks,
+                bulkMode: bulkMode,
+                onBackToScripts: onBackToScripts,
+                onBulkQuickRun: onBulkQuickRun,
+                onBulkQuickWait: onBulkQuickWait,
+                onTogglePower: () => onTogglePower(script.name, !isRunning),
+                onExpandRightSidebar: onExpandRightSidebar,
+                state: controller.scriptStateFor(script),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: tabs
-                    .map(
-                      (tab) => ChoiceChip(
-                        label: Text(_tabLabel(tab)),
-                        showCheckmark: false,
-                        selected: currentTab == tab,
-                        onSelected: (_) => onChangeTab(tab),
-                      ),
-                    )
-                    .toList(),
+              const SizedBox(height: Spacing.md),
+              SegmentedTabStrip<HomeWorkbenchTab>(
+                tabs: tabs,
+                currentTab: currentTab,
+                labelOf: _tabLabel,
+                onSelected: onChangeTab,
               ),
-              const SizedBox(height: 12),
-              Expanded(child: _buildTabContent(script, currentTab)),
+              const SizedBox(height: Spacing.md),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: Motion.of(context, Motion.normal),
+                  switchInCurve: Motion.standard,
+                  switchOutCurve: Motion.standard,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.02),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: KeyedSubtree(
+                    key: ValueKey<HomeWorkbenchTab>(currentTab),
+                    child: _buildTabContent(script, currentTab),
+                  ),
+                ),
+              ),
             ],
           );
         }),
@@ -186,6 +162,201 @@ class ActiveConfigPanel extends StatelessWidget {
     };
   }
 }
+
+class _HeaderBar extends StatelessWidget {
+  const _HeaderBar({
+    required this.script,
+    required this.isRunning,
+    required this.isBulkIdle,
+    required this.hasBulkTasks,
+    required this.bulkMode,
+    required this.state,
+    required this.onTogglePower,
+    required this.onBulkQuickRun,
+    required this.onBulkQuickWait,
+    this.onBackToScripts,
+    this.onExpandRightSidebar,
+  });
+
+  final ScriptModel script;
+  final bool isRunning;
+  final bool isBulkIdle;
+  final bool hasBulkTasks;
+  final HomeBulkQuickScheduleMode bulkMode;
+  final HomeScriptStateFilter state;
+  final VoidCallback onTogglePower;
+  final VoidCallback onBulkQuickRun;
+  final VoidCallback onBulkQuickWait;
+  final VoidCallback? onBackToScripts;
+  final VoidCallback? onExpandRightSidebar;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final accent = _stateColor(context, scheme, state);
+    return Row(
+      children: [
+        if (onBackToScripts != null)
+          Padding(
+            padding: const EdgeInsets.only(right: Spacing.xs),
+            child: IconButton(
+              tooltip: I18n.scriptList.tr,
+              onPressed: onBackToScripts,
+              icon: const Icon(Icons.arrow_back_rounded),
+            ),
+          ),
+        // 状态光点 + 脚本名，形成一个视觉锚点。
+        // 光点是纯装饰（状态文字紧接其后），读屏时应跳过，
+        // 否则会先念一个无名图形再念状态文字，产生冗余噪音。
+        ExcludeSemantics(
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: accent,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.45),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: Spacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                script.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TypeScale.pageTitle(context),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                _stateLabel(state),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TypeScale.caption(context)?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        _BulkQuickScheduleButton(
+          icon: Icons.flash_on_rounded,
+          tooltip: I18n.homeQuickRunAll.tr,
+          loading: bulkMode == HomeBulkQuickScheduleMode.runNow,
+          onPressed: isBulkIdle && hasBulkTasks ? onBulkQuickRun : null,
+        ),
+        _BulkQuickScheduleButton(
+          icon: Icons.schedule_rounded,
+          tooltip: I18n.homeQuickWaitAll.tr,
+          loading: bulkMode == HomeBulkQuickScheduleMode.waitNow,
+          onPressed: isBulkIdle && hasBulkTasks ? onBulkQuickWait : null,
+        ),
+        const SizedBox(width: Spacing.sm),
+        _PowerButton(isRunning: isRunning, onPressed: onTogglePower),
+        if (onExpandRightSidebar != null) ...[
+          const SizedBox(width: Spacing.sm),
+          IconButton.filledTonal(
+            key: const ValueKey<String>(
+              'home-workbench-expand-right-sidebar',
+            ),
+            tooltip: I18n.homeRestoreSidebar.tr,
+            onPressed: onExpandRightSidebar,
+            icon: const Icon(Icons.keyboard_double_arrow_left_rounded),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static Color _stateColor(
+    BuildContext context,
+    ColorScheme scheme,
+    HomeScriptStateFilter state,
+  ) {
+    return SemanticColors.forState(
+      context,
+      running: state == HomeScriptStateFilter.running,
+      abnormal: state == HomeScriptStateFilter.abnormal,
+      offline: state == HomeScriptStateFilter.offline,
+      fallback: scheme.outline,
+    );
+  }
+
+  static String _stateLabel(HomeScriptStateFilter state) {
+    return switch (state) {
+      HomeScriptStateFilter.running => I18n.trayRunningConfigs.tr,
+      HomeScriptStateFilter.abnormal => I18n.trayAbnormalConfigs.tr,
+      HomeScriptStateFilter.stopped => I18n.trayStoppedConfigs.tr,
+      HomeScriptStateFilter.offline => I18n.networkError.tr,
+      HomeScriptStateFilter.all => I18n.scheduler.tr,
+    };
+  }
+}
+
+/// 运行/停止主开关：带状态的 emphasized 按钮
+class _PowerButton extends StatelessWidget {
+  const _PowerButton({required this.isRunning, required this.onPressed});
+
+  final bool isRunning;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final foreground =
+        isRunning ? scheme.onErrorContainer : scheme.onPrimaryContainer;
+    final background =
+        isRunning ? scheme.errorContainer : scheme.primaryContainer;
+    return Tooltip(
+      message: isRunning ? I18n.stop.tr : I18n.run.tr,
+      child: Material(
+        color: background,
+        borderRadius: Radii.chipRadius,
+        child: InkWell(
+          borderRadius: Radii.chipRadius,
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.md,
+              vertical: Spacing.sm,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isRunning
+                      ? Icons.stop_circle_outlined
+                      : Icons.play_circle_outline_rounded,
+                  size: 18,
+                  color: foreground,
+                ),
+                const SizedBox(width: Spacing.xsPlus),
+                Text(
+                  isRunning ? I18n.stop.tr : I18n.run.tr,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: foreground,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 顶部分段式页签已抽到 [SegmentedTabStrip] 供主工作台与右侧栏共用。
 
 class _BulkQuickScheduleButton extends StatelessWidget {
   const _BulkQuickScheduleButton({

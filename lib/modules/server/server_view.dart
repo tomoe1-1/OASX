@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/appbar.dart';
 import 'package:oasx/modules/log/log_widget.dart';
 import 'package:oasx/modules/server/controllers/server_controller.dart';
@@ -17,13 +18,13 @@ class ServerView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: buildPlatformAppBar(context, routePath: '/server'),
-      floatingActionButton: _buildStartServerButton(),
+      floatingActionButton: _buildStartServerButton(context),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final serverController = Get.find<ServerController>();
           return SingleChildScrollView(
             child: Column(
-              spacing: 6,
+              spacing: Spacing.sm,
               children: [
                 ExpansionTileGroup(
                   toggleType: ToggleType.expandOnlyCurrent,
@@ -40,7 +41,10 @@ class ServerView extends StatelessWidget {
                   title: I18n.setupLog.tr,
                 ).constrained(height: constraints.maxHeight - 200),
               ],
-            ).padding(right: 10, left: 10),
+            ).padding(
+              right: Spacing.smPlus,
+              left: Spacing.smPlus,
+            ),
           );
         },
       ),
@@ -54,7 +58,7 @@ class ServerView extends StatelessWidget {
           I18n.rootPathServer.tr,
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: Spacing.smPlus),
         Text(controller.rootPathServer.value),
         TextButton(
           onPressed: () async {
@@ -72,8 +76,8 @@ class ServerView extends StatelessWidget {
     final pass = GetX<ServerController>(builder: (controller) {
       return <Widget>[
         controller.rootPathAuthenticated.value
-            ? const Icon(Icons.check_circle, color: Colors.green)
-            : const Icon(Icons.error, color: Colors.red),
+            ? Icon(Icons.check_circle, color: SemanticColors.success(context))
+            : Icon(Icons.error, color: SemanticColors.danger(context)),
         Text(
           controller.rootPathAuthenticated.value
               ? I18n.rootPathCorrect.tr
@@ -89,8 +93,8 @@ class ServerView extends StatelessWidget {
       collapsedBackgroundColor: Theme.of(context)
           .colorScheme
           .secondaryContainer
-          .withValues(alpha: 0.24),
-      borderRadius: const BorderRadius.all(Radius.circular(10)),
+          .withValues(alpha: 0.28),
+      borderRadius: const BorderRadius.all(Radius.circular(Radii.md)),
       title: pass,
       children: [
         path,
@@ -99,7 +103,7 @@ class ServerView extends StatelessWidget {
     );
   }
 
-  Widget _buildStartServerButton() {
+  Widget _buildStartServerButton(BuildContext context) {
     return GetX<ServerController>(builder: (controller) {
       if (!controller.rootPathAuthenticated.value) {
         return const SizedBox(width: 100, height: 100);
@@ -113,7 +117,7 @@ class ServerView extends StatelessWidget {
         },
         child: Obx(
           () => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
+            duration: Motion.of(context, Motion.normal),
             child: controller.isDeployLoading.value
                 ? const SizedBox(
                     width: 24,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/server/index.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
@@ -42,7 +43,7 @@ class HomeTitleBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
-          const SizedBox(width: 14),
+          const SizedBox(width: Spacing.mdPlus),
           Flexible(child: _TitleLabel(text: 'OASX / ${I18n.home.tr}')),
         ],
       ),
@@ -67,10 +68,10 @@ class SettingTitle extends StatelessWidget {
         children: [
           if (backButton) ...[
             BackButton(onPressed: _backHomeOrPop),
-            const SizedBox(width: 8),
+            const SizedBox(width: Spacing.sm),
           ],
           Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
-          const SizedBox(width: 14),
+          const SizedBox(width: Spacing.mdPlus),
           Flexible(child: _TitleLabel(text: 'OASX / ${I18n.setting.tr}')),
         ],
       ),
@@ -107,13 +108,13 @@ class ServerTitle extends StatelessWidget {
                 !Get.find<ServerController>().isDeployLoading.value) {
               return const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [BackButton(), SizedBox(width: 8)],
+                children: [BackButton(), SizedBox(width: Spacing.sm)],
               );
             }
             return const SizedBox.shrink();
           }),
           Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
-          const SizedBox(width: 14),
+          const SizedBox(width: Spacing.mdPlus),
           const Flexible(child: _TitleLabel(text: 'OASX / Server')),
         ],
       ),
@@ -121,6 +122,7 @@ class ServerTitle extends StatelessWidget {
   }
 }
 
+/// 标题：主名称加重、副标题弱化，形成两级层次
 class _TitleLabel extends StatelessWidget {
   const _TitleLabel({required this.text});
 
@@ -128,12 +130,51 @@ class _TitleLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      softWrap: false,
-      style: Theme.of(context).textTheme.titleMedium,
+    final scheme = Theme.of(context).colorScheme;
+    // 形如 "OASX / Home"，拆出品牌名与页面名做差异化着色
+    final separatorIndex = text.indexOf(' / ');
+    if (separatorIndex <= 0) {
+      return Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        softWrap: false,
+        style: Theme.of(context).textTheme.titleMedium,
+      );
+    }
+    final brand = text.substring(0, separatorIndex);
+    final page = text.substring(separatorIndex + 3);
+    final baseStyle = Theme.of(context).textTheme.titleMedium;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          brand,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+          style: baseStyle?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+            color: scheme.primary,
+          ),
+        ),
+        Text(
+          '  /  ',
+          maxLines: 1,
+          softWrap: false,
+          style: baseStyle?.copyWith(color: scheme.outline),
+        ),
+        Flexible(
+          child: Text(
+            page,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: baseStyle?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ],
     );
   }
 }

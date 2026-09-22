@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class ConfigJsonDropArea extends StatefulWidget {
   const ConfigJsonDropArea({
@@ -36,11 +37,11 @@ class _ConfigJsonDropAreaState extends State<ConfigJsonDropArea> {
       onDropEnded: (_) => _setDragging(false),
       onPerformDrop: _onPerformDrop,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.sm),
         onTap: widget.enabled ? _pickFile : null,
         child: DecoratedBox(
           decoration: _decoration(theme),
-          child: Center(child: _dropText(theme)).paddingAll(18),
+          child: Center(child: _dropText(theme)).paddingAll(Spacing.lgPlus),
         ),
       ),
     ).constrained(width: 320, height: 120);
@@ -56,7 +57,7 @@ class _ConfigJsonDropAreaState extends State<ConfigJsonDropArea> {
             ? theme.colorScheme.primary
             : theme.colorScheme.outlineVariant,
       ),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(Radii.sm),
     );
   }
 

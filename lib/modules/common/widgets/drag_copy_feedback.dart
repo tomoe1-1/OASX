@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Renders the floating feedback chip for drag-copy interactions.
 class DragCopyFeedback extends StatelessWidget {
@@ -22,7 +23,7 @@ class DragCopyFeedback extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: scheme.primaryContainer,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(Radii.sm),
             boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
@@ -32,7 +33,7 @@ class DragCopyFeedback extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
             child: Text(
               label.tr,
               maxLines: 1,

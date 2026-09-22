@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'package:oasx/modules/log/script_log_browser_controller.dart';
 import 'package:oasx/translation/i18n_content.dart';
@@ -94,7 +95,7 @@ class _LogCenterPanelState extends State<LogCenterPanel> {
     }
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -102,7 +103,7 @@ class _LogCenterPanelState extends State<LogCenterPanel> {
               controller: controller,
               onToggleLineWrap: () => _handleLogCenterLineWrapToggle(this),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.md),
             Expanded(
               child: Obx(
                 () => controller.activeTab.value == ScriptLogBrowserTab.info

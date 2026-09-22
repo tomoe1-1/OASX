@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/add_config_dialog.dart';
 import 'package:oasx/modules/common/widgets/appbar.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
@@ -122,7 +123,7 @@ class _StartupLoadingOverlay extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(Spacing.xxl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -131,7 +132,7 @@ class _StartupLoadingOverlay extends StatelessWidget {
                   height: 36,
                   child: CircularProgressIndicator(),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: Spacing.mdPlus),
                 Text(
                   message.tr,
                   textAlign: TextAlign.center,
@@ -162,7 +163,7 @@ class _AutoDeployStatusView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (log.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.md),
             Text(
               log,
               maxLines: 1,
@@ -171,7 +172,7 @@ class _AutoDeployStatusView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
           FilledButton.icon(
             onPressed: () => Get.toNamed('/server'),
             icon: const Icon(Icons.open_in_new_rounded),

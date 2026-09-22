@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
 class NotifyTest extends StatefulWidget {
@@ -33,7 +34,7 @@ class NotifyTestState extends State<NotifyTest> {
     ]
         .toColumn(crossAxisAlignment: CrossAxisAlignment.start)
         .padding(all: 10)
-        .card(margin: const EdgeInsets.all(10))
+        .card(margin: const EdgeInsets.all(Spacing.smPlus))
         .constrained(maxWidth: 300, width: 300);
   }
 

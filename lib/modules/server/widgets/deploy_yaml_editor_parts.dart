@@ -83,15 +83,15 @@ class _DeployYamlSectionCard extends StatelessWidget {
     return Card(
       elevation: 2,
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(color: theme.colorScheme.outlineVariant),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
-        child: Padding(padding: const EdgeInsets.all(12), child: content),
+        child: Padding(padding: const EdgeInsets.all(Spacing.md), child: content),
       ),
-    ).paddingOnly(bottom: 10);
+    ).paddingOnly(bottom: Spacing.smPlus);
   }
 }
 
@@ -114,7 +114,7 @@ class _DeployYamlSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(Radii.xs),
       onTap: onTap,
       child: Row(
         children: [
@@ -125,7 +125,7 @@ class _DeployYamlSectionHeader extends StatelessWidget {
             size: level == 0 ? 22 : 20,
             color: theme.colorScheme.primary,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: Spacing.xs),
           Text(
             node.key,
             style: (level == 0

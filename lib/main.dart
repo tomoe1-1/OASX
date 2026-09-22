@@ -4,7 +4,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:oasx/config/theme.dart' show darkTheme, lightTheme;
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
 import 'package:oasx/service/app_exit_service.dart';
 import 'package:oasx/service/autostart_service.dart';
@@ -39,21 +38,25 @@ class OASXApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeService = Get.find<LocaleService>();
+    final themeService = Get.find<ThemeService>();
 
     return ResponsiveApp(
       builder: (context) {
-        return GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          builder: DevicePreview.appBuilder,
-          scrollBehavior: GlobalBehavior(),
-          translations: Messages(),
-          locale: localeService.currentLocale,
-          fallbackLocale: localeService.fallbackLocale,
-          title: 'OASX',
-          initialRoute: Routes.initial,
-          getPages: Routes.routes,
-          theme: lightTheme,
-          darkTheme: darkTheme,
+        return Obx(
+          () => GetMaterialApp(
+            debugShowCheckedModeBanner: false,
+            builder: DevicePreview.appBuilder,
+            scrollBehavior: GlobalBehavior(),
+            translations: Messages(),
+            locale: localeService.currentLocale,
+            fallbackLocale: localeService.fallbackLocale,
+            title: 'OASX',
+            initialRoute: Routes.initial,
+            getPages: Routes.routes,
+            theme: themeService.lightTheme,
+            darkTheme: themeService.darkTheme,
+            themeMode: themeService.themeMode,
+          ),
         );
       },
     );

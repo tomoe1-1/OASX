@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/api/api_client.dart';
 import 'package:oasx/api/config_transfer_models.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/config_json_drop_area.dart';
 import 'package:oasx/service/script_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
@@ -82,12 +83,12 @@ class _AddConfigDialogBodyState extends State<AddConfigDialogBody> {
           enabled: !_isSubmitting,
           onChanged: (value) => _newName = value,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.md),
         Text(I18n.configCopyFromExist.tr),
         _templateDropdown(),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.md),
         Text(I18n.configImportJson.tr),
-        const SizedBox(height: 8),
+        const SizedBox(height: Spacing.sm),
         ConfigJsonDropArea(
           selectedPath: _selectedJsonPath,
           enabled: !_isSubmitting,

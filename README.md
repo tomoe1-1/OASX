@@ -4,6 +4,16 @@ OASX 是面向 OAS 的 Flutter GUI 客户端，负责提供连接配置、本地
 
 本仓库聚焦前端与桌面端交互体验，不包含 OAS 服务端本体；你可以把它理解为 OAS 的跨平台图形控制台。
 
+## 当前版本
+
+**v1.0.0** — 首个正式版。本版完成界面重做、无障碍达标、自更新切换到本仓库发布库。
+
+- 发布页：<https://github.com/tomoe1-1/OASX/releases>
+- 变更记录：见 [CHANGELOG.md](./CHANGELOG.md)
+
+> 版本号来源：`pubspec.yaml` 的 `version:` 字段，运行时经 `package_info_plus` 读取。
+> 应用内「检查更新」指向本仓库的 releases，**不会**被上游发版覆盖。
+
 ## 项目概览
 
 - 基于 Flutter + Dart 构建，采用 GetX 进行路由、依赖注入和状态管理

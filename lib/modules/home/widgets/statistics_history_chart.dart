@@ -6,6 +6,7 @@ import 'package:oasx/modules/home/models/script_statistics_models.dart';
 import 'package:oasx/modules/home/widgets/statistics_history_axis_layout.dart';
 import 'package:oasx/modules/home/widgets/statistics_formatters.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 const _kHistoryAxisLeadingWidth = 116.0;
 const _kHistoryTaskLabelWidth = 108.0;
@@ -260,7 +261,7 @@ class _HistoryBarRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = statisticsTaskColor(entry.key);
+    final color = statisticsTaskColor(context, entry.key);
     final value = entry.value.metricValueFor(metric);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -290,7 +291,7 @@ class _HistoryBarRow extends StatelessWidget {
                 verticalOffset: 20,
                 message: _tooltipText(),
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                   onTap: onTap,
                   child: SizedBox(
                     height: _kHistoryRowHeight,
@@ -302,18 +303,18 @@ class _HistoryBarRow extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: scheme.surfaceContainerHighest
                                 .withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(Radii.pill),
                           ),
                         ),
                         AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
+                          duration: Motion.normalOf(context),
+                          curve: Motion.standard,
                           width: barWidth,
                           height: focused ? 28 : 24,
                           decoration: BoxDecoration(
                             color:
                                 color.withValues(alpha: focused ? 0.92 : 0.76),
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(Radii.pill),
                             border: Border.all(
                               color: focused ? scheme.onSurface : color,
                               width: focused ? 1.3 : 1,
@@ -384,7 +385,7 @@ class _HistoryValueBadge extends StatelessWidget {
               color.withValues(alpha: 0.18),
               pulse,
             ),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(Radii.pill),
             border: Border.all(
               color: Color.lerp(
                     Colors.transparent,
@@ -404,7 +405,7 @@ class _HistoryValueBadge extends StatelessWidget {
                 : const [],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xs),
             child: Text(
               label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(

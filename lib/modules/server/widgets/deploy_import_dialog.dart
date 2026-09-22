@@ -6,6 +6,7 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import 'package:oasx/modules/server/controllers/server_controller.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Dialog for importing an external YAML file as local deploy.yaml.
 class DeployImportDialog extends StatefulWidget {
@@ -46,7 +47,7 @@ class _DeployImportDialogState extends State<DeployImportDialog> {
       onDropEnded: (_) => _setDragging(false),
       onPerformDrop: _onPerformDrop,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.sm),
         onTap: _pickFile,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -60,9 +61,9 @@ class _DeployImportDialogState extends State<DeployImportDialog> {
                   : theme.colorScheme.outlineVariant,
               style: BorderStyle.solid,
             ),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(Radii.sm),
           ),
-          child: Center(child: _buildDropText(theme)).paddingAll(18),
+          child: Center(child: _buildDropText(theme)).paddingAll(Spacing.lgPlus),
         ),
       ),
     ).constrained(width: 360, height: 140);

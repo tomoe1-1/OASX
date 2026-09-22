@@ -9,6 +9,7 @@ import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/widgets/split_scroll_row.dart';
 import 'package:oasx/modules/home/widgets/task_status_swipe_container.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 part 'task_status_row_parts.dart';
 
@@ -76,11 +77,11 @@ class TaskStatusRow extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: _foregroundColor(context, rowBackground),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(color: _borderColor(context)),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(Spacing.smPlus),
           child: SplitScrollRow(
             minHeight: 40,
             trailingExtent: _actionExtent,
@@ -98,7 +99,7 @@ class TaskStatusRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _TaskTypeIcon(type: task.type),
-                const SizedBox(width: 10),
+                const SizedBox(width: Spacing.smPlus),
                 _TaskMeta(
                   controller: controller,
                   sourceScriptName: sourceScriptName,
@@ -144,8 +145,10 @@ class TaskStatusRow extends StatelessWidget {
   Color _borderColor(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return switch (task.type) {
-      TaskStatusType.running => Colors.green.withValues(alpha: 0.28),
-      TaskStatusType.pending => Colors.orange.withValues(alpha: 0.3),
+      TaskStatusType.running =>
+        SemanticColors.success(context).withValues(alpha: 0.28),
+      TaskStatusType.pending =>
+        SemanticColors.warning(context).withValues(alpha: 0.3),
       TaskStatusType.waiting => scheme.outlineVariant.withValues(alpha: 0.7),
     };
   }

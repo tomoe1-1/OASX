@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/title.dart';
 import 'package:oasx/modules/common/widgets/windows_caption_bar.dart';
 import 'package:oasx/utils/platform_utils.dart';
@@ -87,7 +88,7 @@ PreferredSizeWidget _webAppbar(
           ).padding(left: 16, top: 10, bottom: 10),
         ),
         ...trailingActions,
-        if (trailingActions.isNotEmpty) const SizedBox(width: 8),
+        if (trailingActions.isNotEmpty) const SizedBox(width: Spacing.sm),
       ],
     ),
   );

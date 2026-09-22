@@ -36,7 +36,7 @@ class LogCenterErrorImageCard extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 4 / 3,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.xs),
         child: Image.network(
           url,
           fit: BoxFit.cover,

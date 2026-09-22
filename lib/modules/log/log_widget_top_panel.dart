@@ -23,7 +23,7 @@ class TopLogPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, Spacing.smPlus),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -43,7 +43,7 @@ class TopLogPanel extends StatelessWidget {
                 if (enableClear ?? true) _deleteButton(),
                 if (enableCollapse ?? true) _collapseButton(),
               ],
-            ).paddingAll(8).constrained(height: 48),
+            ).paddingAll(Spacing.sm).constrained(height: 48),
           ),
           if (bottomChild != null) ...[
             const Divider(height: 1),
@@ -57,6 +57,7 @@ class TopLogPanel extends StatelessWidget {
   Widget _copyButton() {
     return IconButton(
       icon: const Icon(Icons.content_copy_rounded, size: 18),
+      tooltip: I18n.copy.tr,
       onPressed: () => controller.copyLogs(),
     );
   }
@@ -68,6 +69,7 @@ class TopLogPanel extends StatelessWidget {
           controller.autoScroll.value ? Icons.flash_on : Icons.flash_off,
           size: 20,
         ),
+        tooltip: I18n.homeLogAutoScroll.tr,
         onPressed: controller.toggleAutoScroll,
       ),
     );
@@ -76,6 +78,7 @@ class TopLogPanel extends StatelessWidget {
   Widget _deleteButton() {
     return IconButton(
       icon: const Icon(Icons.delete_outlined, size: 20),
+      tooltip: I18n.clearLog.tr,
       onPressed: () => controller.clearLog(),
     );
   }
@@ -87,6 +90,10 @@ class TopLogPanel extends StatelessWidget {
           controller.collapseLog.value ? Icons.expand_more : Icons.expand_less,
           size: 20,
         ),
+        // 提示名随当前状态翻转，读到的是「按下会发生什么」而不是图标名。
+        tooltip: controller.collapseLog.value
+            ? I18n.expand.tr
+            : I18n.collapse.tr,
         onPressed: () => controller.toggleCollapse(),
       ),
     );

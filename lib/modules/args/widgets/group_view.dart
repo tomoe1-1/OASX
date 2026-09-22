@@ -21,7 +21,7 @@ class GroupView extends StatelessWidget {
       )
     ].toColumn().card(
         color: Theme.of(context).colorScheme.surface,
-        margin: const EdgeInsets.all(10));
+        margin: const EdgeInsets.all(Spacing.smPlus));
   }
 
   GroupsModel get _data => Get.find<ArgsController>().groups.value[index];

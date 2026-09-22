@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/args/index.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
@@ -61,12 +62,13 @@ class _TaskParameterPanelState extends State<TaskParameterPanel> {
           Row(
             children: [
               IconButton(
+                tooltip: I18n.back.tr,
                 onPressed: () async {
                   await widget.onBack();
                 },
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: Spacing.xs),
               Expanded(
                 child: Text(
                   _taskName.tr,
@@ -82,7 +84,7 @@ class _TaskParameterPanelState extends State<TaskParameterPanel> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sm),
           Expanded(
             child: FutureBuilder<void>(
               key: ValueKey(_loadKey),

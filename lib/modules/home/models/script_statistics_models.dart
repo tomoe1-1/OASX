@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Stream connection states used by the statistics panel.
 enum ScriptStatisticsConnectionState {
@@ -484,15 +485,12 @@ bool isStatisticsDateToday(String dateKey) {
 }
 
 /// Returns a stable color for a task name.
-Color statisticsTaskColor(String taskName) {
-  const palette = <Color>[
-    Color(0xFF2563EB),
-    Color(0xFFDC2626),
-    Color(0xFF16A34A),
-    Color(0xFFD97706),
-    Color(0xFF7C3AED),
-    Color(0xFF0891B2),
-  ];
+///
+/// 颜色按当前主题从亮/暗两套色板中取，且索引只由 [taskName] 决定 ——
+/// 同一个任务在任何图表、任何位置都拿到同一个色相，
+/// 切换主题时整组色一起换档但**映射关系不变**。
+Color statisticsTaskColor(BuildContext context, String taskName) {
+  final palette = SemanticColors.chartPalette(context);
   return palette[taskName.hashCode.abs() % palette.length];
 }
 

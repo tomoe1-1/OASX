@@ -61,31 +61,31 @@ class _LogCenterCopyDialogState extends State<LogCenterCopyDialog> {
         selectionStyle.selectionColor ??
         theme.colorScheme.primary.withValues(alpha: 0.28);
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.xxl),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 920,
           maxHeight: MediaQuery.sizeOf(context).height * 0.88,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Spacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(I18n.copy.tr, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.md),
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     border: Border.all(color: theme.colorScheme.outlineVariant),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: Scrollbar(
                     controller: _scrollController,
                     thumbVisibility: true,
                     child: SingleChildScrollView(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(Spacing.md),
                       child: SelectableText(
                         widget.text,
                         onSelectionChanged: _handleSelectionChanged,
@@ -99,7 +99,7 @@ class _LogCenterCopyDialogState extends State<LogCenterCopyDialog> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.md),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -107,7 +107,7 @@ class _LogCenterCopyDialogState extends State<LogCenterCopyDialog> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(I18n.cancel.tr),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sm),
                   FilledButton.icon(
                     onPressed: _copySelectionOrAll,
                     icon: const Icon(Icons.content_copy_rounded),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Provides the local swipe-to-disable interaction for one overview task row.
 class TaskStatusSwipeContainer extends StatefulWidget {
@@ -23,7 +24,9 @@ class TaskStatusSwipeContainer extends StatefulWidget {
 }
 
 class _TaskStatusSwipeContainerState extends State<TaskStatusSwipeContainer> {
-  static const Duration _settleDuration = Duration(milliseconds: 180);
+  /// 松手后的回弹时长。行为侧（等待动画结束再提交）与视觉侧共用同一值，
+  /// 所以留成常量；**视觉侧会再经 `Motion.of` 过一遍无障碍偏好**。
+  static const Duration _settleDuration = Motion.settle;
   static const double _dismissThreshold = 0.5;
   static const double _leftEdgeThreshold = 0.98;
 
@@ -49,14 +52,17 @@ class _TaskStatusSwipeContainerState extends State<TaskStatusSwipeContainer> {
             onHorizontalDragCancel: _handleDragCancel,
             onHorizontalDragEnd: (_) => _handleDragEnd(),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
               child: Stack(
                 children: [
                   Positioned.fill(child: widget.background),
                   AnimatedSlide(
                     offset: Offset(_slideFraction, 0),
-                    duration: _isDragging ? Duration.zero : _settleDuration,
-                    curve: Curves.easeOutCubic,
+                    // 拖拽跟手时零延迟；松手回弹走令牌，尊重「减少动态效果」。
+                    duration: _isDragging
+                        ? Duration.zero
+                        : Motion.of(context, _settleDuration),
+                    curve: Motion.standard,
                     child: widget.child,
                   ),
                 ],

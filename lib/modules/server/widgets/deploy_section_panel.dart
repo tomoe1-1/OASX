@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/server/controllers/server_controller.dart';
 import 'package:oasx/modules/server/widgets/deploy_import_dialog.dart';
 import 'package:oasx/modules/server/widgets/deploy_yaml_editor.dart';
@@ -39,7 +40,7 @@ class _DeploySectionPanelState extends State<DeploySectionPanel> {
     return GetX<ServerController>(builder: (controller) {
       final authenticated = controller.rootPathAuthenticated.value;
       return Card(
-        margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+        margin: const EdgeInsets.only(bottom: Spacing.smPlus),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -156,7 +157,8 @@ class _DeploySectionHeader extends StatelessWidget {
       child: Row(
         children: [
           if (!authenticated)
-            const Icon(Icons.error, color: Colors.red).paddingOnly(right: 6),
+            Icon(Icons.error, color: SemanticColors.danger(context))
+                .paddingOnly(right: Spacing.xsPlus),
           Text(
             I18n.setupDeploy.tr,
             textAlign: TextAlign.left,
@@ -168,7 +170,7 @@ class _DeploySectionHeader extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colorScheme.error,
                   ),
-            ).paddingOnly(right: 8),
+            ).paddingOnly(right: Spacing.sm),
           IconButton(
             tooltip: I18n.importDeployFile.tr,
             icon: const Icon(Icons.file_download_outlined, size: 18),
@@ -180,10 +182,12 @@ class _DeploySectionHeader extends StatelessWidget {
             onPressed: canExport ? onExport : null,
           ),
           IconButton(
+            tooltip: I18n.copy.tr,
             icon: const Icon(Icons.content_copy_rounded, size: 18),
             onPressed: canSave ? onCopy : null,
           ),
           IconButton(
+            tooltip: I18n.argsSaveChanges.tr,
             icon: const Icon(Icons.save_rounded, size: 18),
             onPressed: canSave ? onSave : null,
           ),
@@ -193,7 +197,7 @@ class _DeploySectionHeader extends StatelessWidget {
             color: authenticated ? null : Theme.of(context).disabledColor,
           ),
         ],
-      ).paddingAll(8).constrained(height: 48),
+      ).paddingAll(Spacing.sm).constrained(height: 48),
     );
   }
 }

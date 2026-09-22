@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
@@ -31,9 +32,9 @@ class ConfigCollectionTaskPreview extends StatelessWidget {
           Icon(
             preview.icon,
             size: 14,
-            color: preview.color,
+            color: preview.color(context),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: Spacing.xs),
           Expanded(
             child: Text(
               preview.displayName,
@@ -124,11 +125,11 @@ class _TaskPreviewData {
     };
   }
 
-  Color get color {
+  Color color(BuildContext context) {
     return switch (type) {
-      _PreviewTaskType.running => Colors.green,
-      _PreviewTaskType.pending => Colors.orange,
-      _PreviewTaskType.waiting => Colors.blueGrey,
+      _PreviewTaskType.running => SemanticColors.success(context),
+      _PreviewTaskType.pending => SemanticColors.warning(context),
+      _PreviewTaskType.waiting => SemanticColors.neutral(context),
     };
   }
 }

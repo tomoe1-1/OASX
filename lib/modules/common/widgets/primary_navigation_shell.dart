@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/appbar.dart';
 import 'package:oasx/modules/home/index.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 import 'package:oasx/modules/settings/index.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
-const double kPrimaryNavigationRailWidth = 80;
+const double kPrimaryNavigationRailWidth = 88;
 
 class PrimaryNavigationShell extends StatefulWidget {
   const PrimaryNavigationShell({
@@ -147,16 +148,47 @@ class _PrimaryNavigationContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IndexedStack(
-      index: selectedIndex,
+    // 已构建过的页面常驻，避免重复初始化；切换时做淡入 + 轻微上移过渡
+    return Stack(
       children: [
-        builtIndexes.contains(0)
-            ? const HomeView(standalone: false)
-            : const SizedBox.shrink(),
-        builtIndexes.contains(1)
-            ? const SettingsView(standalone: false)
-            : const SizedBox.shrink(),
+        for (final index in <int>[0, 1])
+          if (builtIndexes.contains(index))
+            _AnimatedPane(
+              visible: index == selectedIndex,
+              child: index == 0
+                  ? const HomeView(standalone: false)
+                  : const SettingsView(standalone: false),
+            ),
       ],
+    );
+  }
+}
+
+/// 页面过渡容器：可见时淡入并归位，隐藏时淡出并保留占位
+class _AnimatedPane extends StatelessWidget {
+  const _AnimatedPane({required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: visible ? 1 : 0,
+      duration: Motion.of(context, Motion.normal),
+      curve: Motion.standard,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: AnimatedSlide(
+          offset: visible ? Offset.zero : const Offset(0, 0.015),
+          duration: Motion.of(context, Motion.normal),
+          curve: Motion.standard,
+          child: TickerMode(
+            enabled: visible,
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -172,20 +204,73 @@ class _PrimaryNavigationRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return NavigationRail(
       selectedIndex: selectedIndex,
       onDestinationSelected: onSelected,
       labelType: NavigationRailLabelType.all,
+      minWidth: kPrimaryNavigationRailWidth,
+      groupAlignment: -0.85,
+      leading: Padding(
+        padding: const EdgeInsets.only(top: Spacing.sm, bottom: Spacing.lg),
+        child: _RailBrandMark(scheme: scheme),
+      ),
       destinations: [
         NavigationRailDestination(
-          icon: const Icon(Icons.home_rounded),
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home_rounded),
           label: Text(I18n.home.tr),
         ),
         NavigationRailDestination(
-          icon: const Icon(Icons.settings_rounded),
+          icon: const Icon(Icons.settings_outlined),
+          selectedIcon: const Icon(Icons.settings_rounded),
           label: Text(I18n.setting.tr),
         ),
       ],
+    );
+  }
+}
+
+/// 侧边栏顶部的品牌标识：用主题色渐变圆角块，替代纯文字，提升识别度
+class _RailBrandMark extends StatelessWidget {
+  const _RailBrandMark({required this.scheme});
+
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    // 纯装饰：字母只是品牌图形的一部分，读屏时应整体忽略，
+    // 否则会念出一个孤立的 "X"。
+    return ExcludeSemantics(
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [scheme.primary, scheme.tertiary],
+          ),
+          borderRadius: const BorderRadius.all(Radius.circular(Radii.md)),
+          boxShadow: [
+            BoxShadow(
+              color: scheme.primary.withValues(alpha: 0.28),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'X',
+          style: TextStyle(
+            color: scheme.onPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 19,
+            letterSpacing: 0.4,
+          ),
+        ),
+      ),
     );
   }
 }

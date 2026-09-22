@@ -62,12 +62,12 @@ class _DeployYamlHelpTooltipState extends State<_DeployYamlHelpTooltip> {
           showWhenUnlinked: false,
           child: Material(
             elevation: 6,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(Radii.sm),
             color: theme.colorScheme.surface,
             child: SelectableText(
               widget.message,
               style: theme.textTheme.bodySmall,
-            ).paddingAll(10).constrained(maxWidth: 360),
+            ).paddingAll(Spacing.smPlus).constrained(maxWidth: 360),
           ),
         ),
       ],

@@ -4,6 +4,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/api/update_info_model.dart';
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 import 'package:oasx/translation/i18n_content.dart';
 
@@ -22,7 +23,7 @@ class UpdaterView extends StatelessWidget {
         } else {
           UpdateInfoModel data = snapshot.data!;
           return SingleChildScrollView(
-            child: content(data, context).paddingAll(20),
+            child: content(data, context).paddingAll(Spacing.xl),
           );
         }
       },
@@ -33,7 +34,7 @@ class UpdaterView extends StatelessWidget {
     Widget title = <Widget>[
       data.isUpdate!
           ? const Icon(Icons.cloud_download)
-          : const Icon(Icons.cloud_off, color: Colors.green),
+          : Icon(Icons.cloud_off, color: SemanticColors.success(context)),
       data.isUpdate!
           ? Text(
               I18n.findOasNewVersion.tr,
@@ -43,7 +44,7 @@ class UpdaterView extends StatelessWidget {
               I18n.oasLatestVersion.tr,
               style: Theme.of(context).textTheme.titleMedium,
             ),
-      const SizedBox(width: 20),
+      const SizedBox(width: Spacing.xl),
       Text(
         '${I18n.currentBranch.tr}: ${data.branch}',
         style: Theme.of(context).textTheme.titleMedium,
@@ -57,10 +58,10 @@ class UpdaterView extends StatelessWidget {
       ),
     ].toRow(
       crossAxisAlignment: CrossAxisAlignment.center,
-      separator: const SizedBox(width: 10),
+      separator: const SizedBox(width: Spacing.smPlus),
     );
     Table differTable = Table(
-      border: tableBorder,
+      border: tableBorder(context),
       textBaseline: TextBaseline.alphabetic,
       columnWidths: columnWidths,
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
@@ -79,7 +80,7 @@ class UpdaterView extends StatelessWidget {
       child: differTable,
     );
     Table submitHistory = Table(
-      border: tableBorder,
+      border: tableBorder(context),
       columnWidths: historyColumnWidths,
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: submitHistoryData(data, context),
@@ -98,7 +99,7 @@ class UpdaterView extends StatelessWidget {
       scrollableSubmitHistory,
     ].toColumn(
       crossAxisAlignment: CrossAxisAlignment.start,
-      separator: const SizedBox(height: 10),
+      separator: const SizedBox(height: Spacing.smPlus),
     );
   }
 
@@ -113,23 +114,26 @@ class UpdaterView extends StatelessWidget {
   }) {
     return TableRow(
       children: [
-        Text(sha1(data[0])).paddingAll(10),
-        Text(data[1]).paddingAll(10),
+        Text(sha1(data[0])).paddingAll(Spacing.smPlus),
+        Text(data[1]).paddingAll(Spacing.smPlus),
         Text(data[2], overflow: TextOverflow.ellipsis, maxLines: 2)
-            .paddingAll(10),
+            .paddingAll(Spacing.smPlus),
         Text(data[3], overflow: TextOverflow.ellipsis, maxLines: 2)
-            .paddingAll(10),
+            .paddingAll(Spacing.smPlus),
         if (differ)
           localRepo
-              ? Text(I18n.localRepo.tr).paddingAll(10)
-              : Text(I18n.remoteRepo.tr).paddingAll(10),
+              ? Text(I18n.localRepo.tr).paddingAll(Spacing.smPlus)
+              : Text(I18n.remoteRepo.tr).paddingAll(Spacing.smPlus),
       ],
     );
   }
 
-  TableBorder get tableBorder =>
-      TableBorder.all(color: Colors.grey, width: 1, style: BorderStyle.solid);
-
+  /// 表格描边：跟随主题的分隔线色，避免固定灰在深色主题下发脏。
+  TableBorder tableBorder(BuildContext context) => TableBorder.all(
+        color: Surfaces.divider(context),
+        width: 1,
+        style: BorderStyle.solid,
+      );
   Map<int, TableColumnWidth> get columnWidths => const {
     0: FixedColumnWidth(80.0),
     1: FixedColumnWidth(80.0),
@@ -148,28 +152,28 @@ class UpdaterView extends StatelessWidget {
   TableRow differHead(BuildContext context) => TableRow(
     children: [
       Text('SHA1', style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text(I18n.author.tr, style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text(I18n.submitTime.tr, style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text(I18n.submitInfo.tr, style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text('Repo', style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
     ],
   );
 
   TableRow historyHead(BuildContext context) => TableRow(
     children: [
       Text('SHA1', style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text(I18n.author.tr, style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text(I18n.submitTime.tr, style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
       Text(I18n.submitInfo.tr, style: Theme.of(context).textTheme.titleMedium)
-          .paddingAll(10),
+          .paddingAll(Spacing.smPlus),
     ],
   );
 
@@ -185,11 +189,11 @@ class UpdaterView extends StatelessWidget {
   TableRow genHistoryTableRow(List<String> data) {
     return TableRow(
       children: [
-        Text(sha1(data[0])).paddingAll(10),
-        Text(data[1]).paddingAll(10),
+        Text(sha1(data[0])).paddingAll(Spacing.smPlus),
+        Text(data[1]).paddingAll(Spacing.smPlus),
         Text(data[2], overflow: TextOverflow.ellipsis, maxLines: 2)
-            .paddingAll(10),
-        Text(data[3]).paddingAll(10),
+            .paddingAll(Spacing.smPlus),
+        Text(data[3]).paddingAll(Spacing.smPlus),
       ],
     );
   }

@@ -3,7 +3,10 @@ part of 'log_center_panel.dart';
 /// Builds highlighted spans for one log line without selectable text overhead.
 class _LogTextSpanBuilder {
   /// Creates one span builder.
-  const _LogTextSpanBuilder(this.source, this.baseStyle);
+  ///
+  /// [context] 用于解析语义色 —— 语义色分亮/暗两档，
+  /// 必须按当前主题取，不能在构造期锁死。
+  const _LogTextSpanBuilder(this.source, this.baseStyle, this.context);
 
   /// Raw log text.
   final String source;
@@ -11,14 +14,18 @@ class _LogTextSpanBuilder {
   /// Base style inherited by all generated spans.
   final TextStyle baseStyle;
 
+  /// Theme context used to resolve semantic colors per brightness.
+  final BuildContext context;
+
   /// Builds a compact set of spans for common log tokens.
   List<InlineSpan> build() {
     final value = _trimTrailingBreaks(source);
     final spans = <InlineSpan>[];
+    final tokens = _buildTokens();
     var plainStart = 0;
     var index = 0;
     while (index < value.length) {
-      final token = _matchToken(value, index);
+      final token = _matchToken(value, index, tokens);
       if (token == null) {
         index++;
         continue;
@@ -26,8 +33,10 @@ class _LogTextSpanBuilder {
       if (plainStart < index) {
         spans.add(TextSpan(text: value.substring(plainStart, index)));
       }
-      spans.add(token);
-      index += token.toPlainText().length;
+      spans.add(token.span);
+      // 推进量必须取原始文本中被消费的字符数：级别符号是额外插入的
+      // 装饰，不在原文里，用 toPlainText().length 会多算导致解析错位。
+      index += token.consumed;
       plainStart = index;
     }
     if (plainStart < value.length) {
@@ -37,17 +46,38 @@ class _LogTextSpanBuilder {
   }
 
   /// Finds one token match at the current index.
-  TextSpan? _matchToken(String value, int index) {
+  _MatchedToken? _matchToken(String value, int index, List<_LogToken> tokens) {
     final timestampLength = _timestampLength(value, index);
     if (timestampLength > 0) {
-      return TextSpan(
-        text: value.substring(index, index + timestampLength),
-        style: baseStyle.copyWith(color: Colors.cyan),
+      return _MatchedToken(
+        TextSpan(
+          text: value.substring(index, index + timestampLength),
+          style: baseStyle.copyWith(color: SemanticColors.info(context)),
+        ),
+        timestampLength,
       );
     }
-    for (final token in _tokens) {
+    for (final token in tokens) {
       if (_matchesToken(value, index, token.text)) {
-        return TextSpan(text: token.text, style: token.style(baseStyle));
+        final marker = token.marker;
+        final style = token.style(baseStyle);
+        if (marker == null) {
+          return _MatchedToken(
+            TextSpan(text: token.text, style: style),
+            token.text.length,
+          );
+        }
+        // 级别符号与级别名同色，作为一个整体 span 输出。
+        return _MatchedToken(
+          TextSpan(
+            style: style,
+            children: <InlineSpan>[
+              TextSpan(text: marker, style: style),
+              TextSpan(text: token.text, style: style),
+            ],
+          ),
+          token.text.length,
+        );
       }
     }
     return null;
@@ -144,50 +174,63 @@ class _LogTextSpanBuilder {
     return end == value.length ? value : value.substring(0, end);
   }
 
-  /// Static token list used for bounded highlighting.
-  static const _tokens = <_LogToken>[
-    _LogToken('CRITICAL', _styleError),
-    _LogToken('WARNING', _styleWarning),
-    _LogToken('ERROR', _styleError),
-    _LogToken('INFO', _styleInfo),
-    _LogToken('True', _styleSuccess),
-    _LogToken('False', _styleError),
-    _LogToken('None', _styleNone),
-  ];
-
-  /// Styles the INFO token.
-  static TextStyle _styleInfo(TextStyle base) {
-    return base.copyWith(color: const Color.fromARGB(255, 55, 109, 136));
-  }
-
-  /// Styles the WARNING token.
-  static TextStyle _styleWarning(TextStyle base) {
-    return base.copyWith(color: Colors.yellow);
-  }
-
-  /// Styles error-level tokens.
-  static TextStyle _styleError(TextStyle base) {
-    return base.copyWith(color: Colors.red);
-  }
-
-  /// Styles successful boolean-like tokens.
-  static TextStyle _styleSuccess(TextStyle base) {
-    return base.copyWith(color: Colors.lightGreen);
-  }
-
-  /// Styles null-like tokens.
-  static TextStyle _styleNone(TextStyle base) {
-    return base.copyWith(color: Colors.purple);
+  /// Builds the token table with colors already resolved for the current theme.
+  ///
+  /// 每个级别都带 [marker] 前缀符号：颜色 + 符号双重区分，
+  /// 保证色盲用户与灰度场景下仍能分辨日志级别。
+  ///
+  /// 颜色在每次 [build] 时解析一次（而非构造期缓存），
+  /// 这样主题切换后重新渲染能立刻拿到新档位。
+  List<_LogToken> _buildTokens() {
+    final info = SemanticColors.info(context);
+    final warning = SemanticColors.warning(context);
+    final danger = SemanticColors.danger(context);
+    final success = SemanticColors.success(context);
+    final neutral = SemanticColors.neutral(context);
+    return <_LogToken>[
+      _LogToken('CRITICAL', danger, marker: '×× ', weight: FontWeight.w600),
+      _LogToken('WARNING', warning, marker: '! '),
+      _LogToken('ERROR', danger, marker: '× '),
+      _LogToken('INFO', info, marker: '· '),
+      _LogToken('True', success),
+      _LogToken('False', danger),
+      _LogToken('None', neutral),
+    ];
   }
 }
 
 /// Lightweight token descriptor for log rendering.
 class _LogToken {
-  const _LogToken(this.text, this.style);
+  const _LogToken(this.text, this.color, {this.marker, this.weight});
 
   /// Token text to match.
   final String text;
 
-  /// Style factory applied when the token matches.
-  final TextStyle Function(TextStyle base) style;
+  /// Resolved color for the current theme.
+  final Color color;
+
+  /// 级别符号前缀：提供颜色之外的第二种区分手段。
+  final String? marker;
+
+  /// 可选的额外字重（用于 CRITICAL，让最严重的级别在灰度下也更突出）。
+  final FontWeight? weight;
+
+  /// Applies this token's color (and weight) on top of the inherited base.
+  TextStyle style(TextStyle base) =>
+      base.copyWith(color: color, fontWeight: weight);
+}
+
+/// A matched token together with how many source characters it consumed.
+///
+/// [consumed] is tracked separately from the rendered span because markers are
+/// inserted decoration: they appear on screen but do not exist in the raw log
+/// line, so they must never advance the scan index.
+class _MatchedToken {
+  const _MatchedToken(this.span, this.consumed);
+
+  /// Rendered span for the match.
+  final TextSpan span;
+
+  /// Number of characters consumed from the source string.
+  final int consumed;
 }

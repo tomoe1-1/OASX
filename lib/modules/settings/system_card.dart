@@ -4,6 +4,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import 'package:oasx/config/global.dart';
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
+import 'package:oasx/modules/settings/widgets/color_seed_picker.dart';
 import 'package:oasx/modules/settings/widgets/setting_card.dart';
 import 'package:oasx/modules/settings/widgets/setting_item.dart';
 import 'package:oasx/service/autostart_service.dart';
@@ -15,6 +16,7 @@ import 'package:oasx/service/window_service.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/check_version.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class SystemSettingsCard extends StatelessWidget {
   const SystemSettingsCard({super.key});
@@ -27,6 +29,11 @@ class SystemSettingsCard extends StatelessWidget {
         SettingItem(
           left: Text(I18n.changeTheme.tr),
           right: const ThemeSwitcher(),
+        ),
+        SettingItem(
+          left: Text(I18n.changeColorSeed.tr),
+          right: const ColorSeedPicker(),
+          stacked: true,
         ),
         SettingItem(
           left: Text(I18n.changeLanguage.tr),
@@ -116,10 +123,10 @@ class LanguageToggle extends StatelessWidget {
         onPressed: (index) {
           localeService.switchLanguage(index == 0 ? 'zh-CN' : 'en-US');
         },
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.sm),
         children: [
-          Text(I18n.zhCn.tr).paddingSymmetric(horizontal: 10),
-          Text(I18n.enUs.tr).paddingSymmetric(horizontal: 10),
+          Text(I18n.zhCn.tr).paddingSymmetric(horizontal: Spacing.smPlus),
+          Text(I18n.enUs.tr).paddingSymmetric(horizontal: Spacing.smPlus),
         ],
       ).constrained(maxHeight: 40);
     });
@@ -135,6 +142,7 @@ class ThemeSwitcher extends StatelessWidget {
     return Obx(() {
       return IconButton(
         onPressed: themeService.switchTheme,
+        tooltip: I18n.changeTheme.tr,
         icon: const Icon(Icons.light_mode),
         selectedIcon: const Icon(Icons.dark_mode),
         isSelected: themeService.isDarkMode,

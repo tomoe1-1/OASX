@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/home/updater_view.dart';
 import 'package:oasx/modules/settings/controllers/settings_controller.dart';
 import 'package:oasx/service/script_service.dart';
@@ -16,6 +17,7 @@ class AutoScriptButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      tooltip: I18n.autoRunScriptList.tr,
       onPressed: () {
         Get.defaultDialog(
           title: I18n.autoRunScriptList.tr,
@@ -128,7 +130,7 @@ class AutoScriptDialogContent extends StatelessWidget {
               ),
             ]
                 .toRow(mainAxisAlignment: MainAxisAlignment.spaceBetween)
-                .paddingSymmetric(vertical: 4, horizontal: 8);
+                .paddingSymmetric(vertical: Spacing.xs, horizontal: Spacing.sm);
           });
         })
         .toList()

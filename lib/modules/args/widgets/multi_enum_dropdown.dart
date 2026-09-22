@@ -71,7 +71,7 @@ class MultiEnumDropdown extends StatelessWidget {
           onTap: enabled
               ? () => controller.isOpen ? controller.close() : controller.open()
               : null,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(Radii.xs),
           child: InputDecorator(
             isEmpty: label.isEmpty,
             decoration: InputDecoration(

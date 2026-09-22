@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/title.dart';
+import 'package:oasx/translation/i18n_content.dart';
 
 const double _compactActionBaseThreshold = 280;
 const double _compactActionWidth = 48;
@@ -77,13 +80,22 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
       height: widget.preferredSize.height,
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
       child: Row(
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16),
+              padding: const EdgeInsets.only(left: Spacing.lg),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final hideTrailingActions = _shouldHideTrailingActions(
@@ -94,6 +106,7 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
                       if (widget.onMenuPressed != null)
                         IconButton(
                           icon: const Icon(Icons.menu),
+                          tooltip: I18n.more.tr,
                           onPressed: widget.onMenuPressed,
                           visualDensity: VisualDensity.compact,
                           constraints: const BoxConstraints.tightFor(
@@ -114,9 +127,9 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
                       ),
                       if (!hideTrailingActions &&
                           widget.trailingActions.isNotEmpty)
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sm),
                       if (!hideTrailingActions) ...widget.trailingActions,
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Spacing.sm),
                     ],
                   );
                 },

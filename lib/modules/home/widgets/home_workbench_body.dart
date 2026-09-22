@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Hosts the responsive home workbench layout and divider interaction.
 class HomeWorkbenchBody extends StatefulWidget {
@@ -351,14 +352,15 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
     if (!highlighted) {
       return child;
     }
+    final primary = Theme.of(context).colorScheme.primary;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      curve: Curves.easeOut,
-      padding: const EdgeInsets.all(2),
+      duration: Motion.of(context, Motion.fast),
+      curve: Motion.standard,
+      padding: const EdgeInsets.all(Spacing.xxs),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: Radii.cardRadius,
         border: Border.all(
-          color: Colors.blueAccent.withValues(alpha: 0.45 + progress * 0.35),
+          color: primary.withValues(alpha: 0.45 + progress * 0.35),
           width: 1.5,
         ),
       ),
@@ -394,9 +396,10 @@ class _WorkbenchDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).colorScheme.outlineVariant;
+    final scheme = Theme.of(context).colorScheme;
+    final dividerColor = scheme.outlineVariant;
     final highlightColor =
-        Colors.blueAccent.withValues(alpha: 0.12 + collapseProgress * 0.22);
+        scheme.primary.withValues(alpha: 0.12 + collapseProgress * 0.22);
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
       child: GestureDetector(
@@ -420,22 +423,23 @@ class _WorkbenchDivider extends StatelessWidget {
                       borderRadius: BorderRadius.horizontal(
                         left:
                             collapseSide == HomeWorkbenchCollapseSide.workbench
-                                ? const Radius.circular(999)
+                                ? const Radius.circular(Radii.pill)
                                 : Radius.zero,
                         right: collapseSide == HomeWorkbenchCollapseSide.logs
-                            ? const Radius.circular(999)
+                            ? const Radius.circular(Radii.pill)
                             : Radius.zero,
                       ),
                     ),
                   ),
                 ),
               Center(
-                child: Container(
-                  width: 2,
+                child: AnimatedContainer(
+                  duration: Motion.of(context, Motion.fast),
+                  curve: Motion.standard,
+                  width: collapseSide == null ? 2 : 3,
                   decoration: BoxDecoration(
-                    color:
-                        collapseSide == null ? dividerColor : Colors.blueAccent,
-                    borderRadius: BorderRadius.circular(999),
+                    color: collapseSide == null ? dividerColor : scheme.primary,
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
                 ),
               ),

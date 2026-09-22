@@ -89,7 +89,7 @@ class LogCenterErrorView extends StatelessWidget {
 
   Widget _buildLoadMore(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: Spacing.sm),
       child: TextButton(
         onPressed: () => controller.loadErrorList(),
         child: Text(I18n.homeLogLoadOlder.tr),

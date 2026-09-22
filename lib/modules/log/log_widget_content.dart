@@ -15,7 +15,7 @@ class LogContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, Spacing.smPlus),
       child: NotificationListener<UserScrollNotification>(
         onNotification: (notification) {
           onUserScroll();
@@ -27,86 +27,101 @@ class LogContent extends StatelessWidget {
             itemCount: controller.logs.length,
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 1),
-              child: EasyRichText(
-                controller.logs[index],
-                patternList: _buildPatterns(),
-                selectable: true,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                defaultStyle: _selectStyle(context),
+              // 日志列表是整个界面里重绘最频繁的区域（运行中每 120ms 刷新一次）。
+              // 每行都是一段 EasyRichText，排版代价不低；加一层 RepaintBoundary
+              // 可以把重绘限制在真正变化的行上，避免整屏日志跟着一起重绘。
+              child: RepaintBoundary(
+                child: EasyRichText(
+                  controller.logs[index],
+                  patternList: _buildPatterns(context),
+                  selectable: true,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  defaultStyle: _selectStyle(context),
+                ),
               ),
             ),
-          ).paddingAll(10),
+          ).paddingAll(Spacing.smPlus),
         ),
       ),
     ).constrained(width: double.infinity, height: double.infinity);
   }
 
-  List<EasyRichTextPattern> _buildPatterns() {
+  List<EasyRichTextPattern> _buildPatterns(BuildContext context) {
+    // 日志级别：颜色 + 前缀符号双重区分，避免仅靠颜色传达信息
+    // （色盲用户与灰度场景下仍需可读）。
+    //
+    // 颜色按当前亮/暗主题解析后复用到 style 与 prefixInlineSpan，
+    // 避免同一处写两遍导致两档取值不一致。
+    final info = SemanticColors.info(context);
+    final warning = SemanticColors.warning(context);
+    final danger = SemanticColors.danger(context);
+    final success = SemanticColors.success(context);
+    final neutral = SemanticColors.neutral(context);
+    const tabular = [FontFeature.tabularFigures()];
+
+    TextStyle level(Color color, {FontWeight? weight}) => TextStyle(
+          color: color,
+          fontWeight: weight,
+          fontFeatures: tabular,
+        );
+
     return [
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'INFO',
-        style: TextStyle(
-          color: Color.fromARGB(255, 55, 109, 136),
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
-        suffixInlineSpan: TextSpan(
-          style: TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
+        style: level(info),
+        prefixInlineSpan: TextSpan(style: level(info), text: '· '),
+        suffixInlineSpan: const TextSpan(
+          style: TextStyle(fontFeatures: tabular),
           text: '      ',
         ),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'WARNING',
-        style: TextStyle(
-          color: Colors.yellow,
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
+        style: level(warning),
+        prefixInlineSpan: TextSpan(style: level(warning), text: '! '),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'ERROR',
-        style: TextStyle(
-          color: Colors.red,
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
-        suffixInlineSpan: TextSpan(
-          style: TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
+        style: level(danger),
+        prefixInlineSpan: TextSpan(style: level(danger), text: '× '),
+        suffixInlineSpan: const TextSpan(
+          style: TextStyle(fontFeatures: tabular),
           text: '    ',
         ),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'CRITICAL',
-        style: TextStyle(
-          color: Colors.red,
-          fontFeatures: [FontFeature.tabularFigures()],
+        style: level(danger, weight: FontWeight.w600),
+        prefixInlineSpan: TextSpan(
+          style: level(danger, weight: FontWeight.w600),
+          text: '×× ',
         ),
-        suffixInlineSpan: TextSpan(text: '   '),
+        suffixInlineSpan: const TextSpan(text: '   '),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: r'(\d{2}:\d{2}:\d{2}\.\d{3})',
-        style: TextStyle(
-          color: Colors.cyan,
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
+        style: level(info),
       ),
       const EasyRichTextPattern(
         targetString: r'[\{\[\(\)\]\}]',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'True',
-        style: TextStyle(color: Colors.lightGreen),
+        style: TextStyle(color: success),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'False',
-        style: TextStyle(color: Colors.red),
+        style: TextStyle(color: danger),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: 'None',
-        style: TextStyle(color: Colors.purple),
+        style: TextStyle(color: neutral),
       ),
-      const EasyRichTextPattern(
+      EasyRichTextPattern(
         targetString: r'(某喵*某喵)|(~~*~~)',
-        style: TextStyle(color: Colors.lightGreen),
+        style: TextStyle(color: success),
       ),
     ];
   }

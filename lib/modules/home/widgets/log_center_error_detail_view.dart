@@ -63,17 +63,19 @@ class LogCenterErrorDetailView extends StatelessWidget {
         Expanded(
           child: Text(title, style: Theme.of(context).textTheme.titleSmall),
         ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing],
+        if (trailing != null) ...[const SizedBox(width: Spacing.sm), trailing],
       ],
     );
   }
 
   /// Builds the action that scrolls the error detail view to the latest line.
   Widget _buildScrollToBottomButton() {
-    return IconButton(
-      tooltip: I18n.homeLogScrollToBottom.tr,
-      onPressed: _scrollDetailToBottom,
-      icon: const Icon(Icons.vertical_align_bottom_rounded),
+    return Builder(
+      builder: (context) => IconButton(
+        tooltip: I18n.homeLogScrollToBottom.tr,
+        onPressed: () => _scrollDetailToBottom(context),
+        icon: const Icon(Icons.vertical_align_bottom_rounded),
+      ),
     );
   }
 
@@ -87,7 +89,7 @@ class LogCenterErrorDetailView extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: detail.images.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        separatorBuilder: (context, index) => const SizedBox(width: Spacing.sm),
         itemBuilder: (context, index) {
           return LogCenterErrorImageCard(
             controller: controller,
@@ -119,10 +121,10 @@ class LogCenterErrorDetailView extends StatelessWidget {
               trailing: _buildScrollToBottomButton(),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SliverToBoxAdapter(child: SizedBox(height: Spacing.sm)),
           SliverToBoxAdapter(child: _buildImages(detail)),
           if (detail.images.isNotEmpty)
-            const SliverToBoxAdapter(child: SizedBox(height: 6)),
+            const SliverToBoxAdapter(child: SizedBox(height: Spacing.xsPlus)),
           ..._buildLogSlivers(context),
         ],
       ),
@@ -150,7 +152,10 @@ class LogCenterErrorDetailView extends StatelessWidget {
   }
 
   /// Scrolls the detail log viewport to the current bottom edge.
-  void _scrollDetailToBottom() {
+  ///
+  /// 需要 [context] 才能取到用户的无障碍偏好（`Motion.of`），
+  /// 所以由调用方（`_buildScrollToBottomButton` 里的 `Builder`）传入。
+  void _scrollDetailToBottom(BuildContext context) {
     if (!detailScrollController.hasClients) {
       return;
     }
@@ -166,8 +171,9 @@ class LogCenterErrorDetailView extends StatelessWidget {
       }
       detailScrollController.animateTo(
         target,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        // 走令牌，尊重系统「减少动态效果」偏好。
+        duration: Motion.of(context, Motion.settle),
+        curve: Motion.scrollCurve,
       );
     });
   }

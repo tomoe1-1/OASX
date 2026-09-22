@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class TaskJsonImportRequest {
   const TaskJsonImportRequest({
@@ -56,7 +57,7 @@ class _TaskJsonImportDialogState extends State<TaskJsonImportDialog> {
               I18n.taskJsonChooseOne.tr,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sm),
             TextField(
               controller: _textController,
               minLines: 2,
@@ -67,10 +68,10 @@ class _TaskJsonImportDialogState extends State<TaskJsonImportDialog> {
                 border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.md),
             _buildDropArea(context),
             if (_errorText != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sm),
               Text(
                 _errorText!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -120,7 +121,7 @@ class _TaskJsonImportDialogState extends State<TaskJsonImportDialog> {
         onDropEnded: (_) => _setDragging(false),
         onPerformDrop: _onPerformDrop,
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(Radii.sm),
           onTap: _pickFile,
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -134,11 +135,11 @@ class _TaskJsonImportDialogState extends State<TaskJsonImportDialog> {
                     ? theme.colorScheme.primary
                     : theme.colorScheme.outlineVariant,
               ),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(Spacing.md),
                 child: Text(
                   _fileName ?? I18n.taskJsonSelectFile.tr,
                   textAlign: TextAlign.center,

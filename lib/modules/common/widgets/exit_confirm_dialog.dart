@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 /// Captures the user's desktop close-button choice.
 class ExitConfirmResult {
@@ -73,7 +74,7 @@ class _ExitConfirmDialogState extends State<ExitConfirmDialog> {
               onMinimizeToTrayChanged: _updateMinimizeToTray,
               onShutdownOasChanged: _updateShutdownOas,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.lg),
             _ExitDialogFooter(
               skipConfirm: _skipConfirm,
               onSkipConfirmChanged: (value) {
@@ -134,7 +135,7 @@ class _ExitPrimaryOptions extends StatelessWidget {
       alignment: WrapAlignment.spaceBetween,
       runAlignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
-      runSpacing: 4,
+      runSpacing: Spacing.xs,
       children: [
         _ExitOptionCheckbox(
           value: minimizeToTray,
@@ -165,10 +166,10 @@ class _ExitOptionCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(Radii.xs),
       onTap: () => onChanged(!value),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.xsPlus, horizontal: 2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -182,7 +183,7 @@ class _ExitOptionCheckbox extends StatelessWidget {
                 onChanged(next);
               },
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: Spacing.xs),
             Text(label, textAlign: TextAlign.center),
           ],
         ),
@@ -221,7 +222,7 @@ class _ExitDialogFooter extends StatelessWidget {
             ),
           ),
           TextButton(onPressed: onCancel, child: Text(I18n.cancel.tr)),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sm),
           FilledButton(onPressed: onConfirm, child: Text(I18n.confirm.tr)),
         ],
       ),
@@ -239,10 +240,10 @@ class _SkipConfirmCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.labelSmall;
     return InkWell(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(Radii.xs),
       onTap: () => onChanged(!value),
       child: Padding(
-        padding: const EdgeInsets.only(top: 2, right: 8),
+        padding: const EdgeInsets.only(top: 2, right: Spacing.sm),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

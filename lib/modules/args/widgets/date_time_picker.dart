@@ -80,7 +80,7 @@ class DateTimePickerBaseState extends State<DateTimePickerBase> {
             alignment: Alignment.centerLeft,
             animate: true,
           )
-          .animate(const Duration(milliseconds: 120), Curves.easeOut)
+          .animate(Motion.fastOf(context), Motion.scrollCurve)
           .constrained(height: baseHeight)
           .gestures(onTap: () => showPicker(context, widget.value)),
     );

@@ -1,5 +1,6 @@
 enum StorageKey {
   dark,
+  colorSeed,
   language,
   username,
   password,

@@ -165,8 +165,9 @@ void _scheduleLogCenterBottomJump(
     } else {
       scrollController.animateTo(
         target,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        // 走令牌，尊重系统「减少动态效果」偏好。
+        duration: Motion.of(state.context, Motion.settle),
+        curve: Motion.scrollCurve,
       );
     }
   });

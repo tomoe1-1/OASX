@@ -27,17 +27,17 @@ class _DeployYamlValueItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               label,
-              const SizedBox(height: 6),
+              const SizedBox(height: Spacing.xsPlus),
               Align(alignment: Alignment.centerLeft, child: input),
             ],
-          ).paddingOnly(bottom: 9);
+          ).paddingOnly(bottom: Spacing.smMid);
         }
         final inputWidth = _inputWidth(constraints.maxWidth, labelWidth);
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(width: labelWidth, child: label),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.md),
             const Spacer(),
             SizedBox(width: inputWidth, child: input),
           ],

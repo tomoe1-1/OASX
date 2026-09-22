@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/server/models/deploy_yaml_document.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/platform_utils.dart';
@@ -88,7 +89,7 @@ class _DeployYamlEditorState extends State<DeployYamlEditor> {
       return Center(child: Text(I18n.noData.tr));
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+      padding: const EdgeInsets.fromLTRB(Spacing.md, Spacing.smPlus, Spacing.md, Spacing.mdPlus),
       children: [
         for (final node in _visibleCardNodes)
           _DeployYamlNodeView(

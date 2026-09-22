@@ -7,6 +7,7 @@ import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/widgets/config_collection_tile.dart';
 import 'package:oasx/translation/i18n_content.dart';
+import 'package:oasx/config/design_tokens.dart';
 
 class ConfigCollectionPanel extends StatefulWidget {
   static const _compactHeaderThreshold = 220.0;
@@ -81,9 +82,14 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Surfaces.panel(context),
+        borderRadius: Radii.cardRadius,
+        border: Border.all(color: Surfaces.divider(context)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Obx(() {
           final activeDragPayload = widget.controller.activeDragPayload.value;
           if (activeDragPayload == null) {
@@ -120,9 +126,9 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 10),
+              const SizedBox(height: Spacing.smPlus),
               _buildFilters(context),
-              const SizedBox(height: 10),
+              const SizedBox(height: Spacing.smPlus),
               ExpandedOrSizedBox(
                 fillHeight: widget.fillHeight,
                 child: hasConfigs
@@ -162,7 +168,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
         final candidate = candidateData.isNotEmpty ? candidateData.first : null;
         final isHighlighted = _canAcceptPayload(script.name, candidate);
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: Motion.settleOf(context),
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             color: isHighlighted
@@ -170,7 +176,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
                     context,
                   ).colorScheme.primaryContainer.withValues(alpha: 0.28)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(
               color: isHighlighted
                   ? Theme.of(context).colorScheme.primary
@@ -287,7 +293,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
           return Row(
             children: [
               Expanded(child: title),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sm),
               actions,
             ],
           );
@@ -296,7 +302,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Center(child: title),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sm),
             Center(child: actions),
           ],
         );
@@ -328,7 +334,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
                   onChanged: widget.controller.setSearchQuery,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sm),
               filterButton,
             ],
           );
@@ -346,7 +352,7 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sm),
             ],
             Center(
               child: IntrinsicWidth(
@@ -417,8 +423,8 @@ class _HeaderTitle extends StatelessWidget {
     return Wrap(
       alignment: centered ? WrapAlignment.center : WrapAlignment.start,
       crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      runSpacing: 4,
+      spacing: Spacing.sm,
+      runSpacing: Spacing.xs,
       children: [
         Text(I18n.scriptList.tr, style: style),
         Text.rich(
@@ -428,7 +434,7 @@ class _HeaderTitle extends StatelessWidget {
                 text:
                     '${controller.countScriptsByState(HomeScriptStateFilter.running)}',
                 style: style?.copyWith(
-                  color: Colors.green.shade600,
+                  color: SemanticColors.success(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -446,7 +452,7 @@ class _HeaderTitle extends StatelessWidget {
                 text:
                     '${controller.countScriptsByState(HomeScriptStateFilter.abnormal)}',
                 style: style?.copyWith(
-                  color: Colors.orange.shade700,
+                  color: SemanticColors.warning(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
