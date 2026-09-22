@@ -175,25 +175,48 @@ class ApiClient {
     return res.isSuccess && res.data != null ? res.data! : GithubReleaseModel();
   }
 
+  /// 拉取本仓库最新 release。
+  ///
+  /// 注意：**这里不能用 `decodeType`**。`ApiInterceptor.onResponse` 会把所有
+  /// 响应统一包装成 `{code, error, data}`，而 `flutter_nb_net` 的 `decodeType`
+  /// 是在 dio 拦截器跑完之后才拿 `response.data` 去解析的 —— 于是
+  /// `GithubReleaseModel.fromJson` 收到的是外层包装 map，取不到 `tag_name`
+  /// / `html_url`，`isValid` 恒为 false，检查更新必然失败。
+  ///
+  /// 正确做法与 [getUpdateInfo] 一致：不传 decodeType，先取出包装层的 `data`，
+  /// 再用 `fromJson` 手动解析。
   Future<ApiResult<GithubReleaseModel>> getGithubReleaseResult() async {
-    final res = await request<GithubReleaseModel>(
-      () => get(updateUrlGithub, decodeType: GithubReleaseModel()),
+    final res = await request<dynamic>(() => get(updateUrlGithub));
+    final raw = res.data;
+    if (raw is Map<String, dynamic>) {
+      return ApiResult<GithubReleaseModel>.success(
+        GithubReleaseModel.fromJson(raw),
+      );
+    }
+    final message = (res.error ?? '').trim();
+    return ApiResult<GithubReleaseModel>.failure(
+      message.isEmpty ? 'unexpected release payload' : message,
+      res.code,
     );
-    return res;
   }
 
   Future<ReadmeGithubModel> getGithubReadme() async {
-    final res = await request(
+    // 同 getGithubReleaseResult：不能用 decodeType，否则拿到的是
+    // ApiInterceptor 包装后的外层 map，取不到 `content` 字段。
+    final res = await request<dynamic>(
       () => get(
         readmeUrlGithub,
         options: buildCacheOptions(
           const Duration(days: 7),
           options: Options(extra: {'cache': true}),
         ),
-        decodeType: ReadmeGithubModel(),
       ),
     );
-    return res.isSuccess ? res.data : ReadmeGithubModel();
+    final raw = res.data;
+    if (raw is Map<String, dynamic>) {
+      return ReadmeGithubModel.fromJson(raw);
+    }
+    return ReadmeGithubModel();
   }
 
   Future<UpdateInfoModel> getUpdateInfo() async {
