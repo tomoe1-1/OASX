@@ -48,6 +48,17 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android Gradle 中间产物（reports/、intermediates/ 等，非源码）
+/android/build/
+/android/.gradle/
+/android/local.properties
+
+# 其他平台的构建中间产物
+/ios/Pods/
+/ios/.symlinks/
+/macos/Pods/
+/windows/flutter/ephemeral/
+
 /normal/*
 
 # AI
