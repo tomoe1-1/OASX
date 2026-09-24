@@ -10,7 +10,7 @@
 | 仓库根目录 | 发布产物（release build）+ `OASInputRecorder/` | clone 后双击 `oasx.exe` 直接运行 |
 | [`src/`](src/) | 完整 Flutter 源码（414 文件） | 自行 `flutter build windows --release` 重新构建 |
 
-- 当前版本：**v1.0.0**（首个自构建正式版）
+- 当前版本：**v1.1.2**
 - 产物来源：由 `src/` 构建，构建工具链 Flutter 3.47.5 / Dart 3.13.4
 - 应用内「检查更新」指向本仓库 releases，**不会**被上游发版覆盖
 
@@ -99,7 +99,7 @@ flutter build windows --release
 
 ```
 OASX UI package check
-Version: v1.0.0
+Version: v1.1.2
 Storage: OK
 Window plugin: oasx
 Original CSV assets: 3

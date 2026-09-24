@@ -34,7 +34,7 @@ class AppVersionUtils {
   }
 
   /// Debug/dev 模式下的版本号，与 `pubspec.yaml` 的 `version:` 手工同步。
-  static const String _kFallbackVersion = 'v1.0.0';
+  static const String _kFallbackVersion = 'v1.1.2';
 
   /// Normalizes a semantic version string into integer parts.
   static List<int> _normalizeVersion(String version) {

@@ -143,6 +143,30 @@ class ApiClient {
     return res.isSuccess && res.data == 'success';
   }
 
+  Future<Map<String, dynamic>?> getAutoRepairStatus() async {
+    final res = await request<dynamic>(() => get('/tool/repair/status'));
+    if (!res.isSuccess || res.data is! Map) return null;
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<bool> setAutoRepairEnabled(bool enabled) async {
+    final res = await request<dynamic>(
+      () => put('/tool/repair/enabled', data: {'enabled': enabled}),
+    );
+    return res.isSuccess &&
+        res.data is Map &&
+        (res.data as Map)['enabled'] == enabled;
+  }
+
+  Future<bool> setGameEvidenceEnabled(bool enabled) async {
+    final res = await request<dynamic>(
+      () => put('/tool/repair/evidence/enabled', data: {'enabled': enabled}),
+    );
+    return res.isSuccess &&
+        res.data is Map &&
+        (res.data as Map)['share_game_evidence'] == enabled;
+  }
+
   Future<bool> killServer() async {
     final res = await request(
       () => get('/home/kill_server'),

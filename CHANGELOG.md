@@ -6,6 +6,40 @@
 自 **v1.0.0** 起不再跟随上游逐版镜像，而是发布本分支自行构建的成品 ——
 应用内的「检查更新」即指向本仓库的 releases，因此上游发版不会覆盖本地改动。
 
+## v1.1.2
+
+新增 OAS 脚本自动修复的可视开关。源码位于同仓库 [`src/`](src/)，构建命令 `flutter build windows --release`。
+
+- 构建工具链：Flutter 3.47.5 stable / Dart 3.13.4
+- 产物：`oasx.exe` + `data/app.so` + `data/flutter_assets/` + 各插件 DLL
+
+### 本次改动
+
+**新增**
+
+- 「主目录 → 脚本」列表下方新增两个开关，仅在 OAS 提供对应接口时显示：
+  - **智能诊断与脚本修复** —— 启用本地证据采集、代码异常修复与每日活动检查
+  - **允许发送游戏证据给 Codex** —— 单独授权把遮盖常见账号区域的截图及 OCR 文字发送出去用于分析
+- 两个开关均默认关闭；保存失败时提示「请检查 OAS 服务」，不静默失败
+
+**接口对接**
+
+- 读写 OAS 的 `/tool/repair/status`、`/tool/repair/enabled`、`/tool/repair/evidence/enabled`
+- 设置由 OAS 侧持久化在 `deploy/auto_repair.json`，本客户端不保存任何副本
+- OAS 未提供该接口时整块区域不渲染，老版本 OAS 的界面不受影响
+
+**版本**
+
+- 应用版本由 v1.0.0 提升至 v1.1.2
+
+### 校验
+
+- `oasx.exe` 版本资源：`FileVersion` / `ProductVersion` = `1.1.2+12`
+- 产物 104448 字节，与 v1.0.0 一致（仅版本资源变化）
+- 本次版本资源由重新链接 C++ runner 写入；Dart AOT 产物（`data/app.so`）沿用 17:52 的构建，
+  其中两个版本兜底常量仍为旧值 —— 发布模式下界面版本号取自 exe 资源，不受影响
+
+
 ## v1.0.0
 
 首个自构建正式版。源码位于同仓库 [`src/`](src/)，构建命令 `flutter build windows --release`。

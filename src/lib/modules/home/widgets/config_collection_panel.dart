@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oasx/api/api_client.dart';
 import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
@@ -63,6 +64,10 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
   final GlobalKey _listViewportKey = GlobalKey();
   Timer? _autoScrollTimer;
   double _autoScrollDirection = 0;
+  bool _repairEnabled = false;
+  bool _shareGameEvidence = false;
+  bool _repairAvailable = false;
+  bool _updatingCapability = false;
 
   @override
   void initState() {
@@ -70,6 +75,44 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
     _searchController = TextEditingController(
       text: widget.controller.searchQuery.value,
     );
+    _loadCapabilities();
+  }
+
+  Future<void> _loadCapabilities() async {
+    final client = ApiClient();
+    final repair = await client.getAutoRepairStatus();
+    if (!mounted) return;
+    setState(() {
+      _repairAvailable = repair != null;
+      _repairEnabled = repair?['enabled'] == true;
+      _shareGameEvidence = repair?['share_game_evidence'] == true;
+    });
+  }
+
+  Future<void> _setRepairEnabled(bool enabled) async {
+    setState(() => _updatingCapability = true);
+    final success = await ApiClient().setAutoRepairEnabled(enabled);
+    await _loadCapabilities();
+    if (!mounted) return;
+    setState(() => _updatingCapability = false);
+    if (!success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('自动修复开关未能保存，请检查 OAS 服务')));
+    }
+  }
+
+  Future<void> _setGameEvidenceEnabled(bool enabled) async {
+    setState(() => _updatingCapability = true);
+    final success = await ApiClient().setGameEvidenceEnabled(enabled);
+    await _loadCapabilities();
+    if (!mounted) return;
+    setState(() => _updatingCapability = false);
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('游戏证据授权未能保存，请检查 OAS 服务')),
+      );
+    }
   }
 
   @override
@@ -141,6 +184,26 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
                         ),
                       ),
               ),
+              if (_repairAvailable) ...[
+                const SizedBox(height: Spacing.sm),
+                const Divider(height: 1),
+                SwitchListTile.adaptive(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('智能诊断与脚本修复'),
+                  subtitle: const Text('代码异常自动修复；游戏异常本地留证据'),
+                  value: _repairEnabled,
+                  onChanged: _updatingCapability ? null : _setRepairEnabled,
+                ),
+                SwitchListTile.adaptive(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('允许发送游戏证据给 Codex'),
+                  subtitle: const Text('发送遮盖常见账号区域的截图及 OCR 文字，用于修复与活动草稿'),
+                  value: _shareGameEvidence,
+                  onChanged: _updatingCapability ? null : _setGameEvidenceEnabled,
+                ),
+              ],
             ],
           );
         }),
