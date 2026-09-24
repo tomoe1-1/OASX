@@ -1,12 +1,14 @@
 # 更新日志
 
-本仓库（`tomoe1-1/OASX`）发布 **OASX 桌面端 Windows 构建产物**。
+本仓库（`tomoe1-1/OASX`）同时托管 **OASX 桌面端 Windows 构建产物**（仓库根目录）
+与**完整 Flutter 构建源码**（[`src/`](src/)）。
+
 自 **v1.0.0** 起不再跟随上游逐版镜像，而是发布本分支自行构建的成品 ——
 应用内的「检查更新」即指向本仓库的 releases，因此上游发版不会覆盖本地改动。
 
 ## v1.0.0
 
-首个自构建正式版。源码仓库为本分支 `self`，构建命令 `flutter build windows --release`。
+首个自构建正式版。源码位于同仓库 [`src/`](src/)，构建命令 `flutter build windows --release`。
 
 - 构建工具链：Flutter 3.47.5 stable / Dart 3.13.4
 - 产物：`oasx.exe` + `data/app.so` + `data/flutter_assets/` + 各插件 DLL
@@ -38,6 +40,13 @@
 
 - 修复深色主题下表格分隔线与部分文字对比度偏低的问题
 - 修复状态灯、配色圆点等纯装饰元素被读屏重复播报的问题
+
+**仓库**
+
+- 源码并入本仓库 [`src/`](src/)（git 子树合并，保留上游完整提交脉络）；
+  此前源码位于独立分支 `self`，需另行获取
+- 源码侧移出误入库的 `android/build/reports/`（Gradle 生成的报告，非源码），
+  并补全各平台构建产物的忽略规则
 
 **功能**
 
