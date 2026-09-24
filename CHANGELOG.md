@@ -36,8 +36,10 @@
 
 - `oasx.exe` 版本资源：`FileVersion` / `ProductVersion` = `1.1.2+12`
 - 产物 104448 字节，与 v1.0.0 一致（仅版本资源变化）
-- 本次版本资源由重新链接 C++ runner 写入；Dart AOT 产物（`data/app.so`）沿用 17:52 的构建，
-  其中两个版本兜底常量仍为旧值 —— 发布模式下界面版本号取自 exe 资源，不受影响
+- `data/app.so` 已重新生成，内嵌版本常量同步为 `v1.1.2`；ELF `.text` 段与上一版**零差异**，
+  仅 `.rodata` 与 build-id 变化，程序逻辑未变
+- 图标字体恢复为 tree-shaken 版本（15276 字节），与 v1.0.0 发版一致
+- 发布包 `oasx_v1.1.2_windows.zip`（14.70 MB）与 `build/windows/x64/runner/Release/` 逐文件一致
 
 
 ## v1.0.0
