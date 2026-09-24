@@ -1,0 +1,107 @@
+import 'package:flutter/material.dart';
+import 'package:styled_widget/styled_widget.dart';
+
+import 'package:oasx/config/design_tokens.dart';
+import 'package:oasx/modules/common/widgets/title.dart';
+import 'package:oasx/modules/common/widgets/windows_caption_bar.dart';
+import 'package:oasx/utils/platform_utils.dart';
+
+PreferredSizeWidget buildPlatformAppBar(
+  BuildContext context, {
+  bool isCollapsed = false,
+  VoidCallback? onMenuPressed,
+  String? routePath,
+  List<Widget> trailingActions = const [],
+}) {
+  final platform = PlatformUtils.platfrom();
+  return switch (platform) {
+    PlatformType.windows => _windowAppbar(
+      context,
+      onMenuPressed: isCollapsed ? onMenuPressed : null,
+      routePath: routePath,
+      trailingActions: trailingActions,
+    ),
+    PlatformType.linux => _desktopAppbar(
+      context,
+      routePath: routePath,
+      trailingActions: trailingActions,
+    ),
+    PlatformType.macOS => _desktopAppbar(
+      context,
+      routePath: routePath,
+      trailingActions: trailingActions,
+    ),
+    PlatformType.android => _mobileTabletAppbar(context, routePath: routePath),
+    PlatformType.iOS => _mobileTabletAppbar(context, routePath: routePath),
+    PlatformType.web => _webAppbar(
+      context,
+      routePath: routePath,
+      trailingActions: trailingActions,
+    ),
+    _ => _webAppbar(
+      context,
+      routePath: routePath,
+      trailingActions: trailingActions,
+    ),
+  };
+}
+
+PreferredSizeWidget _windowAppbar(
+  BuildContext context, {
+  VoidCallback? onMenuPressed,
+  String? routePath,
+  List<Widget> trailingActions = const [],
+}) {
+  return WindowsCaptionBar(
+    brightness: Theme.of(context).brightness,
+    onMenuPressed: onMenuPressed,
+    routePath: routePath,
+    trailingActions: trailingActions,
+  );
+}
+
+PreferredSizeWidget _desktopAppbar(
+  BuildContext context, {
+  String? routePath,
+  List<Widget> trailingActions = const [],
+}) {
+  return AppBar(
+    title: getTitle(context, routePath: routePath),
+    automaticallyImplyLeading: _shouldAutoImplyLeading(),
+    actions: trailingActions.isEmpty ? null : trailingActions,
+  );
+}
+
+PreferredSizeWidget _webAppbar(
+  BuildContext context, {
+  String? routePath,
+  List<Widget> trailingActions = const [],
+}) {
+  return PreferredSize(
+    preferredSize: const Size.fromHeight(90),
+    child: Row(
+      children: [
+        Expanded(
+          child: getTitle(
+            context,
+            routePath: routePath,
+          ).padding(left: 16, top: 10, bottom: 10),
+        ),
+        ...trailingActions,
+        if (trailingActions.isNotEmpty) const SizedBox(width: Spacing.sm),
+      ],
+    ),
+  );
+}
+
+PreferredSizeWidget _mobileTabletAppbar(
+  BuildContext context, {
+  String? routePath,
+}) {
+  return AppBar(
+    title: getTitle(context, routePath: routePath),
+    automaticallyImplyLeading: _shouldAutoImplyLeading(),
+  );
+}
+
+bool _shouldAutoImplyLeading() => true;
