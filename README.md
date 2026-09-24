@@ -82,6 +82,10 @@ flutter build windows --release
 | Flutter | 3.47.5（stable） |
 | Dart | 3.13.4 |
 
+> **Windows 构建前置**：Flutter 在 Windows 上构建带插件的工程需要符号链接权限。
+> 若报 `Building with plugins requires symlink support`，请开启「开发者模式」
+> （设置 → 系统 → 开发者选项），或以管理员身份运行终端。
+
 构建产物**不入库** —— `src/.gitignore` 已排除 `build/`、`.dart_tool/`
 以及各平台的构建中间产物（`android/build/`、`windows/flutter/ephemeral/` 等）。
 如需更新仓库根目录的运行产物，从
