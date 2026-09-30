@@ -62,6 +62,17 @@ class WindowService extends GetxService with WindowListener {
     await windowManager.waitUntilReadyToShow(buildWindowOptions(lastState));
     windowManager.addListener(this);
 
+    // waitUntilReadyToShow 只配置窗口，不会替应用调用 show()。
+    // 等首帧画好后再显示，避免启动时留下一个一直隐藏的进程。
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await windowManager.show();
+        await windowManager.focus();
+      } catch (e) {
+        printError(info: 'window show failed: $e');
+      }
+    });
+
     _kickoffSystemTrayInit();
   }
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:oasx/config/oas_defaults.dart';
 import 'package:yaml/yaml.dart';
 
 /// Git settings read from the OAS deploy YAML file.
@@ -35,11 +36,8 @@ class DeployGitConfig {
     final git = _gitSection(yaml);
 
     return DeployGitConfig(
-      repository: _stringValue(
-        git['Repository'],
-        'https://e.coding.net/onmyojiautoscript/oas/OnmyojiAutoScript.git',
-      ),
-      branch: _stringValue(git['Branch'], 'master'),
+      repository: _stringValue(git['Repository'], defaultOasRepository),
+      branch: _stringValue(git['Branch'], defaultOasBranch),
       gitExecutable: _stringValue(
         git['GitExecutable'],
         './toolkit/Git/mingw64/bin/git.exe',

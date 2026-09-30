@@ -67,7 +67,12 @@ class _PrimaryNavigationShellState extends State<PrimaryNavigationShell> {
                       selectedIndex: selectedIndex,
                       onSelected: _handleDestinationSelected,
                     ),
-                    const VerticalDivider(width: 1),
+                    // 用 `Surfaces.divider` 而不是裸 `VerticalDivider`：
+                    // 后者取 Material 默认的 `outlineVariant @ 全 alpha`，
+                    // 与本项目 `dividerTheme` 里收敛过的同一条线颜色不一致。
+                    // 同一屏里出现两条深浅不同的「同一种线」是最容易被
+                    // 看出来的不讲究。
+                    const _ShellDivider(),
                     Expanded(child: content),
                   ],
                 )
@@ -193,6 +198,22 @@ class _AnimatedPane extends StatelessWidget {
   }
 }
 
+/// 导航栏与内容区之间的竖向分隔线。
+///
+/// 取 `Surfaces.divider(context)`，与 `dividerTheme` / 手写卡片描边
+/// 保持同一种颜色，避免同屏出现两条深浅不同的分隔线。
+class _ShellDivider extends StatelessWidget {
+  const _ShellDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 1,
+      child: ColoredBox(color: Surfaces.divider(context)),
+    );
+  }
+}
+
 class _PrimaryNavigationRail extends StatelessWidget {
   const _PrimaryNavigationRail({
     required this.selectedIndex,
@@ -231,7 +252,26 @@ class _PrimaryNavigationRail extends StatelessWidget {
   }
 }
 
-/// 侧边栏顶部的品牌标识：用主题色渐变圆角块，替代纯文字，提升识别度
+/// 侧边栏顶部的品牌标识。
+///
+/// ## 为什么放弃原来的渐变方块
+///
+/// 旧实现是一个 40×40 圆角块：`primary → tertiary` 对角渐变、外挂
+/// primary @28% 的模糊发光、中央一个 `w800` 大写 `X`。这三样恰好是
+/// 「AI 生成 UI」最典型的组合（双色渐变 + 霓虹发光 + 单字母方标），
+/// 信息量为零，却抢走了整个左栏的视觉注意力 —— 而左栏的主角应该是
+/// **导航目的地**，不是 Logo。
+///
+/// ## 新做法：把品牌压成一条「状态色脊」
+///
+/// 用一根 3px 宽的竖向色条 + 紧邻的产品名，构成 L 形锚点：
+///
+/// - 色条用 `primary` 纯色（不要渐变 —— 渐变在这个尺寸上只会显脏）
+/// - 产品名用界面已有的 `titleSmall` 字重，不做加权夸张
+/// - 整体高度压到与一个图标齐平，不抢占第一视线的落点
+///
+/// 颜色仍是主题色，换种子时整块跟着走；但因为它足够小、足够安静，
+/// 只做「你在哪个产品里」的定位，不参与信息表达。
 class _RailBrandMark extends StatelessWidget {
   const _RailBrandMark({required this.scheme});
 
@@ -239,37 +279,32 @@ class _RailBrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 纯装饰：字母只是品牌图形的一部分，读屏时应整体忽略，
-    // 否则会念出一个孤立的 "X"。
     return ExcludeSemantics(
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [scheme.primary, scheme.tertiary],
-          ),
-          borderRadius: const BorderRadius.all(Radius.circular(Radii.md)),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.primary.withValues(alpha: 0.28),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 品牌色条：3px 宽、20px 高、全圆角。纯色，不渐变、不发光。
+          Container(
+            width: 3,
+            height: 20,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              borderRadius: BorderRadius.circular(Radii.pill),
             ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'X',
-          style: TextStyle(
-            color: scheme.onPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 19,
-            letterSpacing: 0.4,
           ),
-        ),
+          const SizedBox(height: Spacing.xs),
+          Text(
+            'OASX',
+            style: TextStyle(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              // 11px + 0.8 字距：小字号下需要放开字距才读得清，
+              // 这是排版常规则，不是为了「高级感」而加的装饰性字距。
+              fontSize: 11,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
       ),
     );
   }

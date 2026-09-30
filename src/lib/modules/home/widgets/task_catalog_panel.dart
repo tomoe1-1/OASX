@@ -122,12 +122,14 @@ class _TaskCatalogPanelState extends State<TaskCatalogPanel> {
                 itemCount: sections.length,
                 separatorBuilder: (context, index) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: Spacing.smPlus),
+                  // 统一走 `Surfaces.divider`，与主题层
+                  // `dividerTheme` 及卡片描边同色。
+                  // （旧值硬编码 0.7，比主题的 0.55 深 —— 同一屏里
+                  // 这个 Divider 会比别处的线更抢眼。）
                   child: Divider(
                     height: 1,
                     thickness: 1,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.outlineVariant.withValues(alpha: 0.7),
+                    color: Surfaces.divider(context),
                   ),
                 ),
                 itemBuilder: (context, index) => _CatalogSectionCard(
@@ -437,12 +439,20 @@ class _CatalogTaskRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDraggingTask =
         activeDragPayload?.matchesTask(sourceScriptName, task.name) ?? false;
-    final rowBackground = Theme.of(
-      context,
-    ).colorScheme.secondaryContainer.withValues(alpha: 0.18);
-    final dragColor = Theme.of(
-      context,
-    ).colorScheme.primaryContainer.withValues(alpha: 0.42);
+    // 右侧滑动操作区的底色。
+    //
+    // 这是「左滑露出操作按钮」时那块抽屉的背景，**不是**行本身的底色，
+    // 所以它要比主内容低一档、安静一档 —— 用户滑出按钮时注意力应该在
+    // 按钮图标上，而不是先被一块色底吸引。
+    //
+    // 旧写法 `secondaryContainer @18%` 把容器色稀释成了不确定的中间色
+    // （结果同时取决于种子和底色）。改用明确的 `surfaceContainerHighest`：
+    // 它是表面族的一档实色，比卡片略深，在亮/暗主题下都有稳定对比，
+    // 且不会引入第二种色相。
+    final rowBackground = Theme.of(context).colorScheme.surfaceContainerHighest;
+    // 拖拽悬停态：这里**应该**用强调色 —— 它是短暂的、有明确含义的
+    // 「可以放这里」。用容器色实色而非叠 alpha，保证换种子后仍然稳定可辨。
+    final dragColor = Theme.of(context).colorScheme.primaryContainer;
     final isScriptGroup = task.groupName == I18n.script;
     final supportsEnable = !isScriptGroup || task.name == I18n.restart;
     final payload = controller.buildTaskDragPayload(
@@ -598,14 +608,16 @@ class _CatalogSectionCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
+      // 折叠态用次级面板色（比卡片低一档），展开态用卡片色。
+      // 这让「展开的组」在视觉上明确抬起一档，而不是靠描边区分。
       color: isDraggingGroup
-          ? scheme.primaryContainer.withValues(alpha: 0.35)
+          ? scheme.primaryContainer
           : effectiveExpanded
           ? cardColor
           : scheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.md),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+        side: BorderSide(color: Surfaces.divider(context)),
       ),
       child: Column(
         children: [
@@ -638,7 +650,7 @@ class _CatalogSectionCard extends StatelessWidget {
             Divider(
               height: 1,
               thickness: 1,
-              color: scheme.outlineVariant.withValues(alpha: 0.45),
+              color: Surfaces.divider(context),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.md),

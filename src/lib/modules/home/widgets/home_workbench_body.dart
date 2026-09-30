@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
+import 'package:oasx/modules/home/widgets/home_backdrop.dart';
 import 'package:oasx/config/design_tokens.dart';
 
 /// Hosts the responsive home workbench layout and divider interaction.
@@ -81,13 +82,21 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
       final persistedSplitRatio = widget.controller.workbenchSplitRatio.value;
       return LayoutBuilder(
         builder: (context, constraints) {
+          // 右缘立绘舞台：底衬的少女脸落在这条无面板区里全亮显示。
+          // 舞台宽度由 [backdropStageWidth] 统一给出 —— 这里的
+          // `constraints.maxWidth` 就是它要求的「工作台内容宽」，
+          // painter 侧用 `size.width - 2×Spacing.md` 换算成同一个值。
+          final stageWidth = backdropStageWidth(constraints.maxWidth);
+          // 面板几何全部在「扣掉舞台后」的宽度里解 —— 舞台是 Row
+          // 末尾的真实占位，不是面板下面透出来的。
+          final usableWidth = constraints.maxWidth - stageWidth;
           final unrestrictedLayout = resolveHomeWorkbenchLayout(
-            maxWidth: constraints.maxWidth,
+            maxWidth: usableWidth,
             collectionWidth: persistedCollectionWidth,
             splitRatio: persistedSplitRatio,
           );
           final layout = _resolveLayout(
-            maxWidth: constraints.maxWidth,
+            maxWidth: usableWidth,
             persistedCollectionWidth: persistedCollectionWidth,
             persistedSplitRatio: persistedSplitRatio,
             unrestrictedLayout: unrestrictedLayout,
@@ -111,6 +120,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
               layout: layout,
               collection: collection,
               details: details,
+              stageWidth: stageWidth,
             );
           }
           return Obx(() {
@@ -125,10 +135,16 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
   }
 
   /// Builds the shared desktop skeleton so left-divider drags survive layout changes.
+  ///
+  /// [stageWidth] 是右缘立绘舞台占位：底衬的少女脸落在这条无面板区
+  /// 里全亮显示，所以详情/日志面板的右缘收进到这里为止。宽度由
+  /// [backdropStageWidth] 统一给出（painter 侧用同一公式定位立绘），
+  /// 三栏空间不足时它会自己让步到 0，此时 Row 退回旧几何。
   Widget _buildDesktopLayout({
     required HomeWorkbenchLayout layout,
     required Widget collection,
     required Widget details,
+    required double stageWidth,
   }) {
     final isThreePane = layout.mode == HomeWorkbenchLayoutMode.threePane;
     return Row(
@@ -163,6 +179,9 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
             ),
           ),
         ],
+        // 舞台占位必须留在最后：它不参与拖拽与折叠，只在空间富余时
+        // 给底衬让出一条「看得见少女」的呼吸区。
+        if (stageWidth > 0) SizedBox(width: stageWidth),
       ],
     );
   }
@@ -397,9 +416,16 @@ class _WorkbenchDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dividerColor = scheme.outlineVariant;
+    final dividerColor = Surfaces.divider(context);
+    // 待折叠侧的高亮：不铺色块，只把「将要被折叠的那条边」
+    // 用一根细的强调色杆标出来。
+    //
+    // 旧实现是在分隔条里铺一个 `width/2` 宽的圆角色块（primary @12~34%）。
+    // 问题是色块的面积和「谁要被折叠」这件事没有对应关系 —— 用户看到
+    // 的是一团彩色，而不是一个会执行的动作。改成贴着目标侧画一根 2px
+    // 竖杆：面积足够小，位置本身就是信息（左杆 = 折叠左面板）。
     final highlightColor =
-        scheme.primary.withValues(alpha: 0.12 + collapseProgress * 0.22);
+        scheme.primary.withValues(alpha: 0.55 + collapseProgress * 0.45);
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
       child: GestureDetector(
@@ -417,18 +443,10 @@ class _WorkbenchDivider extends StatelessWidget {
                       ? Alignment.centerLeft
                       : Alignment.centerRight,
                   child: Container(
-                    width: kHomeWorkbenchDividerWidth / 2,
+                    width: 2,
                     decoration: BoxDecoration(
                       color: highlightColor,
-                      borderRadius: BorderRadius.horizontal(
-                        left:
-                            collapseSide == HomeWorkbenchCollapseSide.workbench
-                                ? const Radius.circular(Radii.pill)
-                                : Radius.zero,
-                        right: collapseSide == HomeWorkbenchCollapseSide.logs
-                            ? const Radius.circular(Radii.pill)
-                            : Radius.zero,
-                      ),
+                      borderRadius: BorderRadius.circular(Radii.pill),
                     ),
                   ),
                 ),

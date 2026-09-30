@@ -1,26 +1,75 @@
-# ── 运行时产物 ──────────────────────────────────────────
-# OASX 本地运行日志（含本机绝对路径，不随源码分发）
+# ── OASX 2.x 源码仓库 ──────────────────────────────────────
+# 本仓库托管 OASX 2.x 的「构建源码 + 发行目录 + 文档」。
+# 可执行产物同时通过 GitHub Release 分发（见 README）。
+
+# ── 本机运行痕迹（不入库）─────────────────────────────────
 logs/
-
-# ── 本机工作目录（备份 / 临时脚本 / 上游包，不入库）──────
-.workbuddy/
-
-# ── 本地录制的操作记录（个人数据，不入库）───────────────
-# 仅保留界面内置的示例 CSV（data/ 下的 assets/records/），
-# OASInputRecorder/Records/ 下的为使用者本机录制结果
-OASInputRecorder/Records/
-
-# ── 通用忽略 ────────────────────────────────────────────
-# 但本项目是 Flutter 发布产物，运行必需的 exe / dll / so 必须入库（见下方例外）
 *.log
 *.tmp
 *.bak
-*.swp
+
+# WorkBuddy 工作缓存目录（记忆、草稿、临时脚本、本机备份）
+.workbuddy/
+
+# 工作区临时文件（编辑器 / 发布脚本 / 校验草稿）
+.publish*.py
+.upload*.py
+.release_body*.md
+*.before-auto-repair
+*.before-*
+
+# ── Flutter / Dart 构建产物 ────────────────────────────────
+# src/ 是完整 Flutter 工程，以下为生成物，不入库
+src/.dart_tool/
+src/build/
+src/.flutter-plugins
+src/.flutter-plugins-dependencies
+src/.packages
+src/.pub-cache/
+src/.pub/
+src/pubspec_overrides.yaml
+src/coverage/
+src/**/doc/api/
+src/**/ios/Flutter/.last_build_id
+
+# Android 平台构建中间产物
+src/android/build/
+src/android/.gradle/
+src/android/local.properties
+
+# 其他平台
+src/ios/Pods/
+src/ios/.symlinks/
+src/macos/Pods/
+src/windows/flutter/ephemeral/
+
+# 手工 / 调试构建目录与 AOT 产物
+build_manual/
+src/build_manual/
+src/lib/**/*.dill
+*.dill
+app.so
+app_det.so
+app_abs.so
+
+# Flutter 符号化 / 混淆配置
+app.*.symbols
+app.*.map.json
+
+# ── 发行包（通过 GitHub Release 分发，不入库，避免重复存储）──
+OASX.zip
+OASX-*.zip
+oasx_*.zip
+
+# ── 系统杂项 ───────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
+*.swp
+*~
 
-# 例外：发布产物中的运行必需文件（用 ! 反向豁免）
+# ── 例外：发行目录的运行必需文件必须入库 ───────────────────
+# 本仓库同时是发行目录，exe / dll / so 是分发必需，用 ! 反向豁免
 !oasx.exe
-!OASInputRecorder/OASInputRecorder.exe
-!data/*.so
+!*.dll
+!data/app.so

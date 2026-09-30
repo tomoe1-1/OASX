@@ -1,46 +1,40 @@
-# OASX
+# OASX 2.x
 
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-本仓库同时包含**可运行产物**与**完整构建源码**：
+**当前版本：v2.0.0** —— 本版为视觉层改造，聚焦主页动态背景与启动页重绘。
 
-| 位置 | 内容 | 用途 |
+## 两条获取途径
+
+| 方式 | 适合谁 | 怎么做 |
 |---|---|---|
-| 仓库根目录 | 发布产物（release build）+ `OASInputRecorder/` | clone 后双击 `oasx.exe` 直接运行 |
-| [`src/`](src/) | 完整 Flutter 源码（414 文件） | 自行 `flutter build windows --release` 重新构建 |
+| **下载发行包**（推荐普通用户） | 只想直接用 | 到 [Releases](../../releases/latest) 下载 `oasx_v2.0.0_windows.zip`，解压即用 |
+| **clone 本仓库** | 想改代码 / 看实现 | `git clone`，根目录已是可运行的发行目录，同时含 `src/` 完整源码 |
 
-- 当前版本：**v1.1.2**
-- 产物来源：由 `src/` 构建，构建工具链 Flutter 3.47.5 / Dart 3.13.4
-- 应用内「检查更新」指向本仓库 releases，**不会**被上游发版覆盖
-
-> v0.3.14 及更早：同步自上游 [`xylolit-mu/OASX`](https://github.com/xylolit-mu/OASX)
-> 的 Windows 发布包，逐文件 SHA256 校验后镜像，未做改动。
+> 本仓库的**根目录同时就是发行目录** —— clone 下来双击 `oasx.exe` 即可运行，
+> 无需再从别处复制文件。
 
 ## 目录结构
 
 ```
-OASX/
-├─ oasx.exe                              # 主程序入口（双击运行）
-├─ flutter_windows.dll                   # Flutter Windows 运行时
-├─ ui-check.txt                          # 自检结果
-├─ *_plugin.dll                          # 各功能插件（见下）
+OASX-2.x/
+├─ oasx.exe                      # 主程序入口（双击运行）
+├─ flutter_windows.dll           # Flutter Windows 运行时
+├─ *_plugin.dll                  # 各功能插件（见下表）
+├─ build-info.json               # 版本号与产物 SHA256 校验
 ├─ data/
-│  ├─ app.so                             # Dart AOT 编译产物（核心逻辑）
-│  ├─ icudtl.dat                         # ICU 国际化数据
-│  └─ flutter_assets/                    # 界面资源
-│     ├─ assets/images/                  #   应用图标
-│     ├─ assets/records/                 #   内置示例操作记录（CSV）
-│     ├─ fonts/                          #   Material 图标字体
-│     ├─ packages/                       #   Cupertino / FontAwesome 图标字体
-│     └─ shaders/                        #   渲染着色器
-├─ src/                                  # ★ 完整 Flutter 源码（可重新构建）
-│  ├─ lib/                               #   Dart 源码（252 个文件）
-│  ├─ windows/                           #   Windows 平台原生壳（C++）
-│  ├─ pubspec.yaml                       #   依赖清单与版本号
-│  ├─ assets/                            #   随源码打包的静态资源
-│  └─ .gitignore                         #   构建产物忽略规则
-└─ OASInputRecorder/                     # 配套的只读操作记录器（独立工具）
+│  ├─ app.so                     # Dart AOT 编译产物（核心逻辑）
+│  ├─ icudtl.dat                 # ICU 国际化数据
+│  └─ flutter_assets/            # 界面资源
+│     ├─ assets/images/          #   应用图标
+│     ├─ assets/splash/          #   启动页与主页背景资源
+│     ├─ fonts/                  #   Material 图标字体
+│     └─ shaders/                #   渲染着色器
+├─ src/                          # ★ 完整 Flutter 工程（可重新构建）
+├─ tools/                        # 资源清单同步 / 手工构建 / 版本资源工具
+├─ docs/                         # 项目文档（含视觉验收页）
+└─ LICENSE
 ```
 
 ### 插件 DLL 说明
@@ -59,23 +53,34 @@ OASX/
 ## 运行要求
 
 - Windows 10 / 11（x64）
-- 已安装对应版本的 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 并完成配置
 - 无需安装 Flutter SDK —— 所有运行时依赖已随包附带
+- 首次启动会自动定位 OAS 目录（见下）
 
-双击 `oasx.exe` 即可启动。
+双击 `oasx.exe` 即可启动。**请保持 `data` 目录与所有 DLL 和 exe 位于同一目录。**
+
+## 默认 OAS 私库
+
+首次启动且未保存 OAS 位置时，默认使用 `..\OAS\OnmyojiAutoScript-easy-install`。
+
+- 默认仓库：`git@github-oas:tomoe1-1/OAS-tomoe.git`
+- 默认分支：`self`
+
+> 已保存的 OAS 位置、或 `deploy.yaml` 中明确配置的仓库与分支，**优先于**上述默认值。
 
 ## 从源码构建
 
-`src/` 是**完整可编译**的 Flutter 工程，无需上游仓库即可独立构建：
+`src/` 是完整可编译的 Flutter 工程：
 
-```bash
+```powershell
 cd src
 flutter pub get
-flutter build windows --release
-# 产物：src/build/windows/x64/runner/Release/oasx.exe
+flutter build windows --release --build-name 2.0.0 --build-number 20
 ```
 
-工具链版本（与仓库根目录运行产物一致）：
+产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
+
+`tools/build_manual.sh` 用于已有原生 runner 的手工 AOT 构建，需要显式设置
+`FLUTTER_ROOT`、`PYTHON_BIN`，以及同插件版本生成的 `dart_plugin_registrant.dart`。
 
 | 组件 | 版本 |
 |---|---|
@@ -86,41 +91,49 @@ flutter build windows --release
 > 若报 `Building with plugins requires symlink support`，请开启「开发者模式」
 > （设置 → 系统 → 开发者选项），或以管理员身份运行终端。
 
-构建产物**不入库** —— `src/.gitignore` 已排除 `build/`、`.dart_tool/`
-以及各平台的构建中间产物（`android/build/`、`windows/flutter/ephemeral/` 等）。
-如需更新仓库根目录的运行产物，从
-`src/build/windows/x64/runner/Release/` 手动同步 `oasx.exe`、`data/` 与各 `*_plugin.dll`。
+## 版本与校验
 
-> 源码历史由 git 子树合并保留（`git-subtree-dir: src`），包含上游
-> [`xylolit-mu/OASX`](https://github.com/xylolit-mu/OASX) 的完整提交脉络。
-> 后续同步可用 `git subtree pull --prefix=src <上游地址> self`。
+`build-info.json` 记录版本与产物哈希：
 
-## 状态自检
+| 字段 | 值 |
+|---|---|
+| version / build | `2.0.0` / `20` |
+| 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
+| 平台 | windows-x64 |
+
+已核验与实物一致：
+
+| 文件 | SHA256 |
+|---|---|
+| `data/app.so` | `134F8F658A672E063F736496246F9E9E46B2B191CEB8E88BA28E2DAF1A5FC08E` |
+| `oasx.exe` | `9B450BD299A3F591380FC1471A1118D877258E9F38A34E222ABB1DB949EB60D2` |
+
+启动页、主页背景和默认私库配置相关测试共 **47 项通过**；实际窗口已检查启动线稿
+右下角、主页日志区透明度及应用图标。
+
+## 自动更新
+
+应用内「检查更新」指向本仓库所属的发布库 Releases：
 
 ```
-OASX UI package check
-Version: v1.1.2
-Storage: OK
-Window plugin: oasx
-Original CSV assets: 3
-Tools page first frame: OK
-Design tokens: spacing / radii / motion / type-scale / semantic-colors / surfaces
-Reduce-motion respected: YES
-PASS
+https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 ```
 
-## 关于 OASInputRecorder
+比对本机版本与最新 release 的 tag，仅当远端更新时提示。
 
-`OASInputRecorder/` 是一个**只读**的辅助工具：解析 OnmyojiAutoScript 的日志文件，
-把玩家真实操作（点击、滑动）提取出来，用于生成更贴近真人手感的操作脚本。
+## 与 1.x 的关系
 
-它**不注入、不挂钩、不修改**游戏进程，只读取 OAS 自己写出的文本日志。
+1.x 与 2.x 属于**同一条发布线**（`tomoe1-1/OASX` Releases），2.x 是视觉层重做：
 
-详见 [`OASInputRecorder/README.md`](OASInputRecorder/README.md)。
+- 主页加入正面人物科技风**全幅动态背景**，随窗口尺寸自适应铺满
+- 启动页线稿**右下角重绘**
+- 工作台与日志区**透明度重新校准**
+- 恢复**左上角应用图标**
+
+功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
 
 ## 仓库说明
 
-- 本仓库同时托管**可运行产物**（根目录）与**构建源码**（`src/`）
-- `logs/`（本地运行日志）与 `.workbuddy/`（本机工作目录）已在 `.gitignore` 中排除
-- 源码的 `build/`、`.dart_tool/` 等构建产物由 `src/.gitignore` 排除，不会入库
-- `data/flutter_assets/assets/records/` 下的 3 个 CSV 是**界面内置的示例资源**，属于程序正常运行所需，已一并入库
+- 本仓库同时是**发行目录**与**源码仓库**
+- `logs/`（本机运行日志）、`src/build/`、`src/.dart_tool/` 等已在 `.gitignore` 排除
+- `OASX.zip`（发行包）**不入库** —— 它通过 GitHub Release 分发，避免仓库重复存储

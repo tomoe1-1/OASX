@@ -34,20 +34,6 @@ migrate_working_dir/
 /coverage/
 pubspec_overrides.yaml
 
-# 手工 / 调试构建产物（非标准 build/ 路径，需显式忽略）
-# app.so 与 app.dill 单文件可达 10~52 MB，误入库会严重膨胀仓库
-build_manual/
-build_*/
-*.dill
-app.so
-app_det.so
-app_abs.so
-
-# 自动修复 / 重构留下的临时备份
-*.before-auto-repair
-*.before-*
-*.auto-repair-bak
-
 # IDE/build cache
 .vs/
 

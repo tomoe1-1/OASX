@@ -7,6 +7,7 @@ import 'package:oasx/modules/common/models/config_drag_payload.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/widgets/config_collection_tile.dart';
+import 'package:oasx/modules/home/widgets/home_backdrop.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/config/design_tokens.dart';
 
@@ -127,7 +128,9 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Surfaces.panel(context),
+        // 半透明：主界面有 HomeBackdrop 垫底，面板透出的是氛围立绘
+        // 而不是纯色。详见 home_backdrop.dart 的透明度说明。
+        color: homePanelColor(context),
         borderRadius: Radii.cardRadius,
         border: Border.all(color: Surfaces.divider(context)),
       ),
@@ -233,18 +236,19 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
         return AnimatedContainer(
           duration: Motion.settleOf(context),
           margin: const EdgeInsets.symmetric(vertical: 2),
+          // 拖放目标高亮：**只用填充**，不再叠描边。
+          //
+          // 旧实现同时给了 `primaryContainer @28%` 的色底和 `primary`
+          // 的实色描边 —— 两种手段表达同一件事，结果是「贴了标签的框」，
+          // 而且描边会和相邻行的卡片描边挤在一起，边界看起来重影。
+          //
+          // 容器色实色（不带 alpha）已足以把这一行从列表里托出来；
+          // 圆角 + 填充本身就是 M3 表达「当前目标」的标准做法。
           decoration: BoxDecoration(
             color: isHighlighted
-                ? Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withValues(alpha: 0.28)
+                ? Theme.of(context).colorScheme.primaryContainer
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(Radii.md),
-            border: Border.all(
-              color: isHighlighted
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.transparent,
-            ),
           ),
           child: ConfigCollectionTile(
             controller: widget.controller,

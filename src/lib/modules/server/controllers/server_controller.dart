@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:process_run/shell.dart';
 
 import 'package:oasx/api/api_client.dart';
+import 'package:oasx/config/oas_defaults.dart';
 import 'package:oasx/modules/common/models/storage_key.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/log/log_mixin.dart';
@@ -37,7 +38,9 @@ class ServerController extends GetxController with LogMixin {
   void onInit() {
     rootPathServer.value =
         _storage.read(StorageKey.rootPathServer.name) ??
-        'Please set OAS root path';
+        (Platform.isWindows
+            ? resolveDefaultOasRootPath()
+            : 'Please set OAS root path');
     autoLoginAfterDeploy.value =
         _storage.read(StorageKey.autoLoginAfterDeploy.name) ?? false;
     shell = getShell;
@@ -281,9 +284,55 @@ class ServerController extends GetxController with LogMixin {
     return prefetcher.prefetchRepository();
   }
 
+  /// 部署互斥锁 —— 保证同一时刻只有一条部署链路在跑。
+  ///
+  /// 存在两个发起方：
+  /// 1. 启动动画的 [BootOrchestrator]（用户看到进度面板的那条）
+  /// 2. 主界面 [HomeDashboardController] 的既有启动自检
+  ///
+  /// 两者若同时触发会互相 kill 对方的子进程。这里用单飞（in-flight
+  /// future 复用）保证后到的调用**直接等待先到的那次结果**，
+  /// 从而实现「进度只走一遍、双方都满意」。
+  Future<bool>? _inFlightDeploy;
+
+  /// 部署进度回调：`(阶段索引, 细节文案)`。
+  ///
+  /// 启动动画在进入部署模式时挂上它，就能把真实进度映射到画面上，
+  /// 而不必自己再跑一遍部署命令。
+  void Function(int index, String detail)? onDeployStep;
+
+  /// 通知一次进度（内部用，空实现保护）
+  void _step(int index, String detail) {
+    final cb = onDeployStep;
+    if (cb != null) {
+      try {
+        cb(index, detail);
+      } catch (_) {
+        // 回调异常不应影响部署主流程
+      }
+    }
+  }
+
+  /// 与 [run] 等价的公开入口，但带互斥 —— 启动动画走这条。
+  Future<bool> runExclusive() {
+    final existing = _inFlightDeploy;
+    if (existing != null) {
+      return existing;
+    }
+    final future = run().then((_) => true).catchError((Object _) => false);
+    _inFlightDeploy = future;
+    future.whenComplete(() {
+      if (identical(_inFlightDeploy, future)) {
+        _inFlightDeploy = null;
+      }
+    });
+    return future;
+  }
+
   Future<void> run() async {
     isDeployLoading.value = true;
     try {
+      _step(1, '正在停止旧服务…');
       if (Get.isRegistered<SettingsController>()) {
         await Get.find<SettingsController>().killServer(
           showTip: false,
@@ -298,15 +347,20 @@ class ServerController extends GetxController with LogMixin {
         'taskkill /f /t /im pythonw.exe',
         ignorePythonwNotRunning: true,
       );
+      _step(1, '正在拉取 OAS 仓库…');
       await prefetchRepository();
+      _step(1, '仓库已同步');
       final pythonConfig = DeployPythonConfig.read(rootPathServer.value);
+      _step(2, '正在安装运行依赖（可能需要几分钟）…');
       await runShell(
         shellExecutableArguments(
           pythonConfig.getPythonPath(rootPathServer.value),
           ['-m', 'deploy.installer'],
         ),
       );
+      _step(2, '依赖安装完成');
       await runShell('echo Start OAS');
+      _step(3, '正在启动 OAS 服务…');
       unawaited(
         runShell(
           shellExecutableArguments(
@@ -315,6 +369,7 @@ class ServerController extends GetxController with LogMixin {
           ),
         ),
       );
+      _step(3, '服务已启动');
 
       final shouldAutoLogin = _resolveAutoLoginAfterDeploy();
       if (!shouldAutoLogin) {

@@ -4,6 +4,7 @@ import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/common/widgets/segmented_tab_strip.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
+import 'package:oasx/modules/home/widgets/home_backdrop.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
 import 'package:oasx/modules/home/widgets/analysis_panel.dart';
@@ -28,7 +29,9 @@ class WorkbenchSidebarPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Surfaces.panel(context),
+        // 半透明：主界面有 HomeBackdrop 垫底，面板透出的是氛围立绘
+        // 而不是纯色。详见 home_backdrop.dart 的透明度说明。
+        color: homeSidebarPanelColor(context),
         borderRadius: Radii.cardRadius,
         border: Border.all(color: Surfaces.divider(context)),
       ),
@@ -57,20 +60,27 @@ class WorkbenchSidebarPanel extends StatelessWidget {
                   duration: Motion.of(context, Motion.normal),
                   switchInCurve: Motion.standard,
                   switchOutCurve: Motion.standard,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  ),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
                   child: KeyedSubtree(
                     key: ValueKey<HomeWorkbenchTab>(currentTab),
-                    child: switch (currentTab) {
-                      HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
-                      HomeWorkbenchTab.logs =>
-                        LogCenterPanel(scriptName: scriptName),
-                      HomeWorkbenchTab.analysis =>
-                        ScriptAnalysisPanel(scriptName: scriptName),
-                      _ => const SizedBox.shrink(),
-                    },
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        cardTheme: Theme.of(context).cardTheme.copyWith(
+                          color: homeSidebarCardColor(context),
+                        ),
+                      ),
+                      child: switch (currentTab) {
+                        HomeWorkbenchTab.stats => const ScriptStatisticsPanel(),
+                        HomeWorkbenchTab.logs => LogCenterPanel(
+                          scriptName: scriptName,
+                        ),
+                        HomeWorkbenchTab.analysis => ScriptAnalysisPanel(
+                          scriptName: scriptName,
+                        ),
+                        _ => const SizedBox.shrink(),
+                      },
+                    ),
                   ),
                 ),
               ),

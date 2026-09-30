@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>OASX-Neo 主界面视觉层改造 · 验收</title>
+<style>
+  :root{
+    /* 改造后的暗色表面族（teal 种子，strength=0.35 / sat=0.30） */
+    --s-surface:  rgb(16,20,21);
+    --s-panel:    rgb(25,32,33);
+    --s-card:     rgb(33,40,42);
+    --s-overlay:  rgb(41,51,52);
+    /* 改造前的死灰 */
+    --o-surface:  rgb(18,18,20);
+    --o-panel:    rgb(28,28,31);
+    --o-card:     rgb(36,36,39);
+    --o-overlay:  rgb(45,45,49);
+    --ink:        rgb(238,242,244);
+    --ink-2:      rgb(154,164,168);
+    --ink-3:      rgb(108,118,122);
+    --accent:     rgb(0,150,136);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 44px 56px;
+    background:var(--s-surface); color:var(--ink);
+    font:400 14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1{font-size:20px;font-weight:600;margin:0 0 6px;letter-spacing:-.2px}
+  .sub{color:var(--ink-2);font-size:13px;margin:0 0 36px}
+  h2{font-size:13px;font-weight:600;color:var(--ink-2);
+     text-transform:uppercase;letter-spacing:.9px;
+     margin:38px 0 14px;padding-bottom:8px;
+     border-bottom:1px solid rgba(255,255,255,.07)}
+
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .sw{border-radius:8px;padding:14px;height:104px;
+      display:flex;flex-direction:column;justify-content:flex-end;
+      border:1px solid rgba(255,255,255,.08)}
+  .sw .nm{font-size:11.5px;font-weight:600;letter-spacing:.2px}
+  .sw .rgb{font:400 11px/1.5 ui-monospace,Consolas,monospace;
+           color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .old .sw .nm{color:var(--ink)}
+  .old{--x:0}
+
+  /* 层级示意 */
+  .stack{margin-top:8px;border-radius:10px;padding:18px;
+         background:var(--s-panel);border:1px solid rgba(255,255,255,.07)}
+  .stack .card{border-radius:8px;padding:16px;background:var(--s-card);
+               border:1px solid rgba(255,255,255,.07);
+               display:flex;gap:14px;align-items:flex-start}
+  .stack .chip{border-radius:6px;padding:9px 12px;background:var(--s-overlay);
+               border:1px solid rgba(255,255,255,.09);
+               font-size:12px;color:var(--ink-2)}
+  .t{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:3px}
+  .d{font-size:11.5px;color:var(--ink-2);line-height:1.55}
+
+  ul{margin:10px 0 0;padding-left:18px;color:var(--ink-2);font-size:12.5px}
+  li{margin:5px 0}
+  li b{color:var(--ink);font-weight:600}
+  code{font:400 11.5px ui-monospace,Consolas,monospace;
+       background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px;
+       color:rgb(190,210,208)}
+  .accentbar{display:inline-block;width:3px;height:13px;border-radius:99px;
+             background:var(--accent);vertical-align:-2px;margin-right:7px}
+  .note{margin-top:14px;padding:12px 14px;border-radius:8px;
+        background:rgba(0,150,136,.08);
+        border-left:2px solid rgba(0,150,136,.5);
+        font-size:12.5px;color:var(--ink-2)}
+  .note b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;font-size:12px;
+        font-variant-numeric:tabular-nums;margin-top:4px}
+  th{text-align:left;font-weight:600;color:var(--ink-3);font-size:11px;
+     text-transform:uppercase;letter-spacing:.6px;
+     padding:0 10px 8px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  td{padding:8px 10px 8px 0;border-bottom:1px solid rgba(255,255,255,.05);
+     color:var(--ink-2)}
+  td b{color:var(--ink);font-weight:600}
+  .bad{color:rgb(232,124,124);font-weight:600}
+  .good{color:rgb(96,190,158);font-weight:600}
+  .mono{font:400 11.5px ui-monospace,Consolas,monospace}
+
+  /* 字标下方区域的实尺示意 */
+  .mark{display:flex;gap:26px;align-items:flex-start;
+        background:rgb(5,8,15);border:1px solid rgba(255,255,255,.07);
+        border-radius:10px;padding:26px 30px;margin-top:6px}
+  .mark .col{display:flex;flex-direction:column;gap:3px}
+  .mk-title{font-size:38px;font-weight:700;color:rgb(242,246,250);
+            letter-spacing:5.3px;line-height:1;display:flex;align-items:center;gap:12px}
+  .mk-title::after{content:'';width:34px;height:2px;background:rgb(79,168,216);
+                   display:block;border-radius:1px}
+  .mk-date{font-size:9.1px;color:rgb(84,112,138);margin-top:8px;letter-spacing:.55px}
+  .mk-motto{font-size:10.3px;color:rgb(110,140,168);letter-spacing:.2px}
+  .lbl{font-size:10.5px;color:rgb(108,118,122);letter-spacing:.4px;
+       text-transform:uppercase;margin-bottom:7px}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block;
+          vertical-align:-2px;margin-right:6px;
+          border:1px solid rgba(255,255,255,.14)}
+</style>
+</head>
+<body>
+
+<h1>OASX-Neo 视觉层改造 · 验收</h1>
+<p class="sub">暗色主题 · 以青碧（teal）种子为例 · 只改外观层，未动任何行为逻辑</p>
+
+<h2>⓪ 第七轮（当前生效）：素材重画 + 立绘舞台 —— 「只有黑块」的最终解</h2>
+<p class="sub" style="margin:-4px 0 14px;font-size:12px">
+  用户反馈「背景图也没有我给的提示词的风格，只有黑块」。第七轮不再在旧素材上调参，
+  而是重走了一条完整的生成链，并承认一个物理事实：
+  <b>三面板铺满窗口时，立绘透过 86% 面板只剩 14% —— 只调亮度无解</b>。
+</p>
+
+<h3 style="font-size:14px;margin:18px 0 8px">① 素材重画：视频生成模型出「会动」的少女</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+  <tr style="color:rgb(150,164,182);text-align:left">
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">步骤</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">做法 / 参数</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">结果</th>
+  </tr>
+  <tr><td style="padding:6px 8px">锚帧</td><td style="padding:6px 8px">ImageGen 按参考提示词出图；再以 image-to-image（<code>input_fidelity: high</code>）派生线稿版 / 闭眼版</td><td style="padding:6px 8px">角色形象跨变体一致</td></tr>
+  <tr><td style="padding:6px 8px">视频</td><td style="padding:6px 8px">VideoGen 图生视频（首帧=线稿版），prompt 锁「dark navy-blue hair / cool pale skin / cyan-blue monochromatic」，negative_prompt 禁 pink / purple / magenta / warm tones</td><td style="padding:6px 8px">1176×1764 @24fps、121 帧；第一版色相跑偏（紫黑发+粉肤色）已废弃</td></tr>
+  <tr><td style="padding:6px 8px">色相复核</td><td style="padding:6px 8px">HSV 直方图统计</td><td style="padding:6px 8px"><b>99.9% 蓝青，粉紫 0.1%</b></td></tr>
+  <tr><td style="padding:6px 8px">取段</td><td style="padding:6px 8px">88–120 帧（实体化完成后的微动段：帧差 2.1–3.0、亮度平稳）；线稿→扫描→实体化的完整叙事留给启动页</td><td style="padding:6px 8px">循环段无剧情跳变</td></tr>
+  <tr><td style="padding:6px 8px">裁切</td><td style="padding:6px 8px"><code>CROP_BOX=(0.28, 0.05, 1.0, 0.78)</code> —— 头肩特写，y 上限 0.78 顺便<b>裁掉生成视频右下的水印</b>（该区域峰值亮度 186–240）</td><td style="padding:6px 8px">画面里没有水印像素</td></tr>
+  <tr><td style="padding:6px 8px">压暗</td><td style="padding:6px 8px">素材内<b>水平渐变</b>压暗（左 45% 全量 ×0.55 → 75% 处恢复），而非全局压暗；白平衡增益从锚帧算一次、全程固定（防闪烁）</td><td style="padding:6px 8px">左侧垫面板不刺眼，右侧舞台保持全亮</td></tr>
+  <tr><td style="padding:6px 8px">成品</td><td style="padding:6px 8px">740×1120 × 32 帧 动画 WebP（乒乓循环），1.22MB</td><td style="padding:6px 8px">相邻帧最大跳变 0.60，解码 8–15ms/帧</td></tr>
+</table>
+
+<h3 style="font-size:14px;margin:18px 0 8px">② 立绘舞台：可见性靠「让出一条无面板区」，不靠透明度</h3>
+<p class="sub" style="margin:-4px 0 10px;font-size:12px">
+  工作台 Row 末尾让出 <code>backdropStageWidth</code> 宽的<b>真实占位</b>（不是面板下面透出来），
+  少女的脸完整落进这条全亮区；身体其余部分照旧透过面板做氛围。
+  布局侧与 painter 侧共用同一公式，脸中心对准舞台中心。
+</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+  <tr style="color:rgb(150,164,182);text-align:left">
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">参数</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">值</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">依据</th>
+  </tr>
+  <tr><td style="padding:6px 8px">画幅高度比</td><td style="padding:6px 8px"><code>_kHeightRatio = 1.1</code>（旧 1.6）</td><td style="padding:6px 8px">第二版素材是全高人像：顶部出血 10%、底边贴窗口下缘</td></tr>
+  <tr><td style="padding:6px 8px">舞台宽度</td><td style="padding:6px 8px"><code>clamp(工作台宽×0.13, 120, 300)</code>，且<b>向三栏让路</b>：不足三栏最低总宽 1092 + 舞台时缩到 0</td><td style="padding:6px 8px">脸约占 0.24×窗口高 ≈ 0.13×窗口宽；装饰给功能让路，四档分辨率三栏全部保住</td></tr>
+  <tr><td style="padding:6px 8px">水平锚点</td><td style="padding:6px 8px"><code>_kArtAnchorX = 0.52</code></td><td style="padding:6px 8px"><b>虹膜质心实测 0.5201</b>；合成图上虹膜中心距舞台中心 −3px(1280) / −12px(1920)</td></tr>
+  <tr><td style="padding:6px 8px">面板透明度</td><td style="padding:6px 8px"><code>_kPanelAlpha = 0.86</code>（旧 0.80）</td><td style="padding:6px 8px">配合素材内压暗，把「透出的亮」压回可读区间</td></tr>
+</table>
+
+<h3 style="font-size:14px;margin:18px 0 8px">③ 测量模型修正：混合公式权重写反（关键 bug）</h3>
+<p class="sub" style="margin:-4px 0 10px;font-size:12px">
+  旧复核脚本把面板混合写成 <code>PANEL×(1−α) + bg×α</code>（背景占 α），
+  但 Dart 语义 <code>withValues(alpha: 0.86)</code> 是<b>面板占 86%、背景透 14%</b>。
+  权重一反，历史测量<b>系统性过严</b> —— 第一版素材被压到均值 35 仍「擦线」，
+  用户看到的就是「黑块」。修正后同素材反而轻松达标，真正缺的从来不是更黑，而是构图。
+  复核脚本已重写为参数化的 <code>tools/measure_real_geometry.py</code>（真实布局：
+  12 页边距 + 左栏 340 + 缝 16，锚点用「距右缘偏移」）。
+</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+  <tr style="color:rgb(150,164,182);text-align:left">
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">验收项</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">结果</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">标准</th>
+  </tr>
+  <tr><td style="padding:6px 8px">可读性（32 帧 × 1280/1440/1920/2560 全量逐帧）</td><td style="padding:6px 8px"><b>最差次级 5.80 : 1</b> @帧30·1920</td><td style="padding:6px 8px">≥ 4.5 : 1（WCAG AA）✓</td></tr>
+  <tr><td style="padding:6px 8px">动画流畅性</td><td style="padding:6px 8px">相邻帧最大跳变 0.60（旧素材 2.1）</td><td style="padding:6px 8px">肉眼无闪烁 ✓</td></tr>
+  <tr><td style="padding:6px 8px">静态回退一致性</td><td style="padding:6px 8px"><code>main_bg_muse.jpg</code> 用新素材第 0 帧重生成（旧图是另一构图的发丝特写，回退时会「换画面」）</td><td style="padding:6px 8px">回退不再跳变 ✓</td></tr>
+  <tr><td style="padding:6px 8px">静态校验（7 个改动文件）</td><td style="padding:6px 8px">0 错 / 0 警 / 0 提示</td><td style="padding:6px 8px">✓</td></tr>
+  <tr><td style="padding:6px 8px">部署</td><td style="padding:6px 8px">pubspec 登记 webp；<code>AssetManifest.bin</code> +1 条并 verify 通过；app.so 与 data/ 两端 md5 一致</td><td style="padding:6px 8px">✓</td></tr>
+</table>
+
+<h3 style="font-size:14px;margin:18px 0 8px">④ 追加事故：渐隐方向写反 —— 立绘整块消失（「启动还是无变化」的根因）</h3>
+<p class="sub" style="margin:-4px 0 10px;font-size:12px">
+  素材与舞台全部就位后用户仍反馈「启动没变化」。排查链：确认两个运行目录已同步 →
+  确认 app.so 含新代码与素材字符串 → 亮绿探针二分 → 重读 painter 代码定位到根因：
+  水平渐隐用 <code>BlendMode.dstIn</code> 实现，其语义是 <b>dst × src 的 alpha</b>，
+  <b>透明的那端就是被擦掉的那端</b>。渐变却写成「起点不透明 → 终点透明」，
+  于是窗口右半部（x &gt; 0.62×宽）的立绘被整体乘成 0 alpha —— 而立绘恰恰锚在右缘舞台上。
+  表现与之前 manifest 事故同款：<b>代码在跑、日志无报错、画面上什么都没有</b>。
+  修复即交换渐变两端颜色；同一函数里的垂直渐隐方向本来就是对的，反衬出这类
+  「无征兆」bug 只能靠测试钉住 —— 已提 <code>backdropFadeLeftColors()</code>
+  并在 <code>home_backdrop_test.dart</code> 断言「起点必须比终点更透明」。
+  教训汇总：<b>dstIn 类蒙版的方向属于语义约束，不写测试就一定会再反一次。</b>
+</p>
+
+<h2>⑧ 第一版底衬（历史方案，已被第七轮取代）</h2>
+<p class="sub" style="margin:-4px 0 14px;font-size:12px;color:rgb(120,132,150)">
+  ⚠️ 以下为第一版记录（370×560 素材、锚点 0.95、画幅比 1.6、旧测量模型），
+  结论已被第七轮重画 + 舞台方案取代，保留仅为对照当时的排查过程。
+</p>
+
+<h3 style="font-size:14px;margin:18px 0 8px">① 为什么是「衬底」而不是「壁纸」</h3>
+<p class="sub" style="margin:-4px 0 12px;font-size:12px">
+  主界面内容区由两块<b>不透明面板</b>拼成（左列表 / 右详情），面板之间只留 <code>Spacing.md</code> 的 12px 缝隙。
+  实测：面板外的可见面积只占窗口 <b>15.4%</b>（AppBar + 底边 + 缝隙 + 侧栏），
+  其余 84.6% 都被面板盖着。所以一张铺满的壁纸在这里<b>没有落点</b>。
+  做法是让主界面面板改为半透明（<code>surface @ 80%</code>），底衬从面板后透出来形成氛围。
+</p>
+
+<h3 style="font-size:14px;margin:18px 0 8px">② 素材规格（诚实记录）</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+  <tr style="color:rgb(150,164,182);text-align:left">
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">项</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">值</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">后果</th>
+  </tr>
+  <tr><td style="padding:6px 8px">可用尺寸</td><td style="padding:6px 8px">370 × 560</td><td style="padding:6px 8px">源视频 720p 的物理上限，<b>不是压缩损失</b></td></tr>
+  <tr><td style="padding:6px 8px">成品尺寸</td><td style="padding:6px 8px">1480 × 2240</td><td style="padding:6px 8px">原生 4×。目的不是「变清晰」，是<b>减少运行时重采样</b></td></tr>
+  <tr><td style="padding:6px 8px">运行时缩放</td><td style="padding:6px 8px">2560×1440 → 1.03×<br>1440×900 → 0.64×<br>1280×800 → 0.57×</td><td style="padding:6px 8px">高分屏≈1:1 不再放大；小屏靠缩小保锐度</td></tr>
+  <tr><td style="padding:6px 8px">锐化补偿</td><td style="padding:6px 8px">USM r=2 / 45% / t=3</td><td style="padding:6px 8px">保守参数，锐过头会出现振铃白边</td></tr>
+  <tr><td style="padding:6px 8px">实际覆盖</td><td style="padding:6px 8px">约 41%</td><td style="padding:6px 8px">定位于右侧，不复用为壁纸</td></tr>
+  <tr><td style="padding:6px 8px">处理方式</td><td style="padding:6px 8px">均值压到 43（成品实测 40.2），<b>不降饱和</b></td><td style="padding:6px 8px">靠<b>色相</b>而非亮度营造氛围</td></tr>
+</table>
+
+<h3 style="font-size:14px;margin:18px 0 8px">③ 可读性实测 —— 测量点决定结论</h3>
+<p class="sub" style="margin:-4px 0 10px;font-size:12px">
+  <b>这里踩过一个坑</b>：最初把对比度测在<b>面板缝隙</b>上（那里没有文字），量出来 13–15 : 1，
+  于是写下「余量很大」。但底衬的真实威胁面在<b>面板内部</b> —— 半透明面板会把背景透到正文和日志下面。
+  改到<b>文字真正所在的行</b>上重测，结论反转：旧构图（锚点 <code>0.68</code>）下次级文字只有 <b>3.2–3.8 : 1</b>，
+  是不合格的。
+</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+  <tr style="color:rgb(150,164,182);text-align:left">
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">分辨率</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">文字行 · 正文最差</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">文字行 · 次级最差</th>
+  </tr>
+  <tr><td style="padding:6px 8px">1280 × 800</td><td style="padding:6px 8px">9.80 : 1</td><td style="padding:6px 8px"><b>4.77 : 1</b></td></tr>
+  <tr><td style="padding:6px 8px">1440 × 900</td><td style="padding:6px 8px">15.22 : 1</td><td style="padding:6px 8px">7.40 : 1</td></tr>
+  <tr><td style="padding:6px 8px">1920 × 1080</td><td style="padding:6px 8px">15.22 : 1</td><td style="padding:6px 8px">7.40 : 1</td></tr>
+  <tr><td style="padding:6px 8px">2560 × 1440</td><td style="padding:6px 8px">15.22 : 1</td><td style="padding:6px 8px">7.40 : 1</td></tr>
+</table>
+
+<h4 style="font-size:13px;margin:14px 0 8px;color:rgb(190,205,220)">关键：靠构图解决，而不是靠压暗</h4>
+<p class="sub" style="margin:-4px 0 10px;font-size:12px">
+  发现不达标后，第一反应是「把底衬压暗」，但那只会在牺牲画面的路上越走越远。
+  真正的原因是<b>位置</b>：右面板占窗口右侧 <code>532–1428</code>，旧锚点 <code>0.68</code>
+  恰好把立绘最亮的蓝发送进日志文字区。
+  把水平锚点推到 <code>0.95</code>（贴右缘），亮部就落到文字右侧的空白里去了。
+</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+  <tr style="color:rgb(150,164,182);text-align:left">
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">水平锚点</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">次级文字最差</th>
+    <th style="padding:6px 8px;border-bottom:1px solid rgb(48,56,68)">结论</th>
+  </tr>
+  <tr><td style="padding:6px 8px"><code>0.68</code>（右三分线）</td><td style="padding:6px 8px">3.80 : 1</td><td style="padding:6px 8px">✗ 亮部压在文字上</td></tr>
+  <tr><td style="padding:6px 8px"><code>0.82</code></td><td style="padding:6px 8px">3.80 : 1</td><td style="padding:6px 8px">✗ 仍未让开</td></tr>
+  <tr><td style="padding:6px 8px"><b><code>0.95</code></b>（贴右缘）</td><td style="padding:6px 8px"><b>5.95 : 1</b></td><td style="padding:6px 8px">✓ 亮部退出文字区</td></tr>
+</table>
+<p class="sub" style="margin:0 0 10px;font-size:12px">
+  另外画幅比也要收紧：<code>2.0</code> 时 1280×800 只有 2.46 : 1（小窗口下立绘相对过大），
+  <code>1.6</code> 时四档分辨率全部达标 —— 所以 <code>_kHeightRatio = 1.6</code> 是实测结论，不是审美选择。
+</p>
+<p class="sub" style="margin:-6px 0 14px;font-size:12px">
+  复核脚本：<code>tools/render_home_backdrop.py</code>（与 Dart 侧共用同一组常量，
+  并在<b>文字行</b>上测量，不再测缝隙）。
+</p>
+
+<h3 style="font-size:14px;margin:18px 0 8px">④ 为什么没改全局 <code>Surfaces.panel</code></h3>
+<p class="sub" style="margin:-4px 0 14px;font-size:12px">
+  <code>Surfaces.panel</code> 是全项目共用的 —— 设置页、日志页的列表容器都取它。
+  一旦全局改半透明，<b>那些底下没有底衬的页面</b>就会透出 scaffold 纯色，面板看起来像「褪色了」，
+  是纯粹的负收益。所以只给主界面开了一个口子：<code>homePanelColor()</code>。
+</p>
+
+<h3 style="font-size:14px;margin:18px 0 8px">⑤ 本轮修掉的两个「看不见效果」的根因</h3>
+<p class="sub" style="margin:-4px 0 8px;font-size:12px">
+  这一版做完后用户反馈「看不到效果」。排查出两个独立原因，都不是视觉问题：
+</p>
+<ol class="sub" style="margin:0 0 14px;font-size:12px;padding-left:22px">
+  <li style="margin-bottom:8px">
+    <b>部署步骤从未执行。</b> <code>tools/build_manual.sh</code> 末尾写的是
+    <code>echo "部署： cp build/app.so ../data/app.so"</code> —— 把命令当提示打印了。
+    表现是「构建成功但运行目录仍是旧产物」。已改成真正拷贝，并加 md5 自校验。
+  </li>
+  <li style="margin-bottom:8px">
+    <b><code>AssetManifest.bin</code> 没同步。</b> 引擎只读 <code>.bin</code>
+    （<code>asset_manifest.dart</code> 的 <code>_kAssetManifestFilename</code>），
+    旁边的 <code>.json</code> 是旧格式残留、引擎根本不看。
+    于是 <code>rootBundle.load()</code> 失败 → 走了静默降级 →
+    <b>画面什么都不出现且零报错</b>。新增 <code>tools/sync_asset_manifest.py</code>
+    按 pubspec 重建 <code>.bin</code>（含字节级往返自检）。
+  </li>
+  <li>
+    <b>静默降级改成可观测。</b> 上面第 2 条之所以难查，就是因为
+    <code>HomeBackdrop._load()</code> 当时是 <code>catch (_) {}</code>。
+    现在降级行为不变（仍回退纯表面色、不阻塞界面），但失败原因会记在
+    <code>_loadError</code> 上、debug 下打日志，并有测试断言
+    <code>isDegraded</code> 为 <code>true</code>。
+  </li>
+</ol>
+
+<h2>① 字标下方改为「日期 + 每日语录」</h2>
+<p class="sub" style="margin:-4px 0 14px;font-size:12px">
+  原来的固定副标题「OAS 工作模式」是一句<b>永远不变的功能说明</b> —— 用户第二次开机就不会再读它，
+  却占着字标正下方最贵的一块位置，每天提供零信息量。
+</p>
+<div class="mark">
+  <div class="col">
+    <div class="lbl">改前</div>
+    <div class="mk-title" style="font-size:38px">OASX</div>
+    <div class="mk-date" style="color:rgb(110,140,168)">OAS 工作模式</div>
+    <div style="font-size:10.5px;color:rgb(108,118,122);margin-top:9px">
+      每天一样 · 无信息量 · 第二次就被忽略
+    </div>
+  </div>
+  <div class="col" style="border-left:1px solid rgba(255,255,255,.07);padding-left:26px">
+    <div class="lbl">改后</div>
+    <div class="mk-title" style="font-size:38px">OASX</div>
+    <div class="mk-date">2026 年 9 月 29 日 · 周二</div>
+    <div class="mk-motto">把该做的事做完，剩下的交给时间</div>
+    <div style="font-size:10.5px;color:rgb(108,118,122);margin-top:9px">
+      每天不同 · 日期是真实信息 · 语录提供一点情绪价值
+    </div>
+  </div>
+</div>
+
+<p class="sub" style="margin:14px 0 6px;font-size:12px">
+  两行之间靠 <b>颜色 + 字号</b> 分主次，不靠加粗 —— 语录再加粗会跟上方 w700 的字标抢分量：
+</p>
+<ul>
+  <li><span class="swatch" style="background:rgb(242,246,250)"></span><b>字标</b>
+      <span class="mono">62px / w700 / #F2F6FA</span></li>
+  <li><span class="swatch" style="background:rgb(84,112,138)"></span><b>日期</b>
+      <span class="mono">14.9px / w400 / #54708A</span> —— 新增的第三档文字色，
+      对比度约 4.6:1（AA 需 ≥4.5，<b>再暗就不达标</b>）</li>
+  <li><span class="swatch" style="background:rgb(110,140,168)"></span><b>语录</b>
+      <span class="mono">16.7px / w400 / #6E8CA8</span> —— 是这一组的重点，所以比日期亮一档</li>
+</ul>
+
+<div class="note">
+  <b>语录取值规则（这不是随机，是可预测的）：</b><br>
+  索引 = <code>年内第几天 % 37</code>。用 dayOfYear 而非 (年,月,日) 哈希，
+  是为了保证<b>跨年连续</b> —— 12/31 与次年 1/1 是相邻两句，而不是突然跳到随机位置。<br>
+  37 与 365、366 都互质，所以一年内 37 句全部轮转、不撞句（已验证）。<br>
+  口径是「安静、克制、有画面感」，<b>刻意排除</b>励志口号（说教）与网络流行语（会随时间腐坏）。
+</div>
+
+<div class="note" style="background:rgba(79,168,216,.07);border-left-color:rgba(79,168,216,.5)">
+  <b>窄窗口的降级顺序（先缩字、后截断）：</b><br>
+  放不下时先把字号缩到 <b>11px 下限</b>，仍放不下才加省略号。<br>
+  <b>顺序不能反</b> —— 若先截断，窗口只是稍窄一点就丢字，而用户其实宁愿字小也要看全。
+  截断一律交给 <code>ellipsis</code>，手切字符会把中文和英文单词切坏。
+</div>
+
+<h2>① 立绘贴合改为 cover（上一轮）</h2>
+<p class="sub" style="margin:-4px 0 14px;font-size:12px">
+  起因：核查「窗口宽高比变化时立绘会不会跑偏」。用离屏渲染按真实公式算了 6 种比例，
+  发现旧实现（按画布高度贴合、右缘贴边）在偏离 3:2 时会坏掉 —— 而且是<b>两个方向坏得不一样</b>。
+</p>
+<table>
+  <tr><th>画布</th><th>旧实现 rect</th><th>结果</th></tr>
+  <tr><td><b>1200×800</b>（3:2 基准）</td><td class="mono">lt=0, w=1200, h=800</td><td class="good">贴合 ✓</td></tr>
+  <tr><td><b>2560×800</b> 超宽</td><td class="mono">lt=1360, w=1200</td><td class="bad">右缘留 1360px 空白竖带 ✗</td></tr>
+  <tr><td><b>3440×900</b> 超宽</td><td class="mono">lt=2090, w=1350</td><td class="bad">右缘留 2090px 空白，画面塌成「左空右挤」✗</td></tr>
+  <tr><td><b>800×1200</b> 竖屏</td><td class="mono">lt=-1000, w=1800</td><td class="bad">放大过头，蝴蝶结与天灵盖被裁 ✗</td></tr>
+</table>
+<p class="sub" style="margin:10px 0 4px;font-size:12px">
+  根因：<b>两个轴独立定尺寸</b>（高按 H、宽按比例反推），宽高比一偏离就必然一边留空、一边溢出。
+</p>
+<p class="sub" style="margin:8px 0 0;font-size:12px">
+  改为 cover：<code>scale = max(W/1200, H/800)</code>，两轴同时覆盖、等比不拉伸，超出部分从<b>左侧</b>溢出
+  （立绘内容偏右，左半是留白，溢出去无所谓）。重算后 6 种比例<b>全部铺满</b>：
+</p>
+<div class="note" style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px;line-height:1.75">
+  1200×800 → 铺满，零溢出<br>
+  2560×800 → 铺满（上下各溢出 453px，脸仍在画内）<br>
+  3440×900 → 铺满（上下各溢出 697px）<br>
+  800×1200 → 铺满（左溢出 1000px，头部与蝴蝶结完整保留）<br>
+  <span class="good">回归检查：3:2 基准下逐像素与改前一致，无副作用</span>
+</div>
+
+<h2>② 中性色不再「死灰」</h2>
+<div class="row old">
+  <div class="sw" style="background:var(--o-surface)"><span class="nm">surface</span><span class="rgb">18, 18, 20</span></div>
+  <div class="sw" style="background:var(--o-panel)"><span class="nm">panel</span><span class="rgb">28, 28, 31</span></div>
+  <div class="sw" style="background:var(--o-card)"><span class="nm">card</span><span class="rgb">36, 36, 39</span></div>
+  <div class="sw" style="background:var(--o-overlay)"><span class="nm">overlay</span><span class="rgb">45, 45, 49</span></div>
+</div>
+<p class="sub" style="margin:10px 0 22px;font-size:12px">↑ 改造前：RGB 三值几乎相等，是纯灰 —— 与品牌色完全脱节，界面主体像来自另一套设计</p>
+
+<div class="row">
+  <div class="sw" style="background:var(--s-surface)"><span class="nm">surface</span><span class="rgb">16, 20, 21</span></div>
+  <div class="sw" style="background:var(--s-panel)"><span class="nm">panel</span><span class="rgb">25, 32, 33</span></div>
+  <div class="sw" style="background:var(--s-card)"><span class="nm">card</span><span class="rgb">33, 40, 42</span></div>
+  <div class="sw" style="background:var(--s-overlay)"><span class="nm">overlay</span><span class="rgb">41, 51, 52</span></div>
+</div>
+<p class="sub" style="margin:10px 0 0;font-size:12px">↑ 改造后：G/B 略高于 R，带一层极淡的青灰。明度完全不变 → 对比度不受影响</p>
+
+<div class="note">
+  <b>标定过程（这版数字是测出来的，不是估的）：</b><br>
+  初版取 <code>strength = 0.06</code> —— 实测<b>完全无效</b>。暗色表面 RGB 只在 18~45 的窄区间，
+  6% 混合量经舍入后连一个色阶都动不了（色相偏移 0.0°）。<br>
+  实测 <code>0.22</code> 刚可见、<code>0.35</code> 清晰但不脏、<code>0.50</code> 开始发青过头 → 取 <code>0.35</code>。
+</div>
+
+<h2>③ 层级可辨：卡片不再像「贴在面板上的贴纸」</h2>
+<div class="stack">
+  <div class="d" style="margin-bottom:12px">panel（分栏底）</div>
+  <div class="card">
+    <div style="flex:1">
+      <div class="t">card（卡片面 · 比 panel 亮一档）</div>
+      <div class="d">展开的任务组、配置项都长在这一层。原先 card 与 panel 在某些种子下几乎同色，层次糊成一团。</div>
+    </div>
+    <div class="chip">overlay<br>弹层/菜单</div>
+  </div>
+</div>
+<ul>
+  <li>浮层（对话框 / 菜单 / 下拉）统一提到 <code>surfaceContainerHighest</code>，<b>严格高于卡片色</b> —— 否则弹层铺在卡片上时边界消失，看起来像没弹出来</li>
+  <li>分隔线：暗色下 alpha <code>0.4 → 0.55</code>（原值让线几乎不可见，而各地又各自硬编码 0.7 / 0.45，同屏出现三种深浅）</li>
+</ul>
+
+<h2>④ 拆掉 AI 味的装饰</h2>
+<ul>
+  <li><b>左上角品牌标识</b>：原来是「primary→tertiary 双色渐变 + 28% 外发光 + w800 大写 X」三连
+      —— 恰好是「AI 生成 UI」最典型的指纹。改为 <span class="accentbar"></span><b>3px 纯色竖条 + OASX</b>，安静地只做定位</li>
+  <li><b>卡片渐变</b>：删掉 <code>primary @ 3%</code> 对角渐变。3% 在暗底上不可见，却让卡片颜色和 <code>cardTheme.color</code> 对不上，还给每张卡多挂一层 shader</li>
+  <li><b>分隔条拖拽高亮</b>：原来是半条宽的色块 —— 面积和「谁会被折叠」没有语义关联。改为贴着目标侧的 <b>2px 竖杆</b>，位置本身就是信息</li>
+  <li><b>拖放目标高亮</b>：原来是色底 + 实色描边双重强调 → 只留填充</li>
+</ul>
+
+<h2>⑤ 可达性</h2>
+<ul>
+  <li>按钮垂直内边距 <code>12 → 14</code>，默认按钮落到 <b>~44px</b> 触摸目标</li>
+  <li>交互态色改用 primary 低透明度（悬停 5% / 焦点 9% / 按压 7%），替换默认的 onSurface 灰蒙层</li>
+  <li>滚动条滑块色显式指定（原默认值在部分种子上与底几乎同色）</li>
+</ul>
+
+<h2>⑥ 顺带修掉的两个真问题</h2>
+<ul>
+  <li><b>启动动画的「光圈」</b>：用户指出后已删除那两道眼睑开合弧线。它是按固定坐标估算的叠加层，
+      而立绘里眼睛处于斜向透视且被发丝半遮，弧线对不上真实眼位，观感像两个悬空胶囊</li>
+  <li><b>立绘左边缘白条</b>：闭眼的两张资源（<code>girl_closed_wire.png</code> / <code>girl_closed.jpg</code>）
+      左边缘有 1–5px 纯白残条（亮度 255）。因为立绘贴图正好靠屏幕最左，残条就露在最左边缘。已清理，
+      边缘最大亮度从 <b>255 → 45</b></li>
+</ul>
+
+<h2>⑦ 启动页新增「跳过」提示（可发现性）</h2>
+<p class="sub" style="margin:-4px 0 12px;font-size:12px">
+  跳过一直支持（点击 / 任意键），但<b>画面上从来没写过</b>。一个只能靠猜才发现的能力等于不存在 ——
+  尤其部署模式下动画会持续到装完，用户干等时一定会去找「能不能跳过」。
+</p>
+<ul>
+  <li>位置<b>底部居中</b>（四角已被 HUD 装饰占用），字后垫一层径向暗晕，压在立绘高光上也读得清</li>
+  <li><b>呼吸节奏 2.4s</b>，不透明度 0.5↔1.0 正弦往返。用 sin 而非三角波 ——
+      三角波在折返点有速度突变，眼睛能看出「顿一下」</li>
+  <li><b>不可跳过时反而不动</b>：部署进行中显示「正在部署 OAS，请勿关闭窗口」，固定不透明度。
+      这是<b>状态陈述</b>而非邀请 —— 给状态陈述加呼吸动画等于用动作暗示存在一个可执行的操作，
+      而这里恰恰没有。用户会去点，然后什么都不发生，比不提示更糟</li>
+</ul>
+
+</body>
+</html>

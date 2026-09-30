@@ -258,8 +258,23 @@ abstract final class TypeScale {
 }
 
 /// 语义化表面样式：按亮/暗主题给出卡片、面板的填充与描边
+///
+/// ## 层级顺序（暗色主题）
+///
+/// 暗色主题不能靠阴影表达「浮起」，只能靠**表面明度**。全项目统一为：
+///
+/// ```
+/// scaffold(surface)
+///   └─ panel     surfaceContainer        ← 次级面板 / 分栏底
+///        └─ card surfaceContainerHigh    ← 卡片面（比面板亮一档）
+///             └─ overlay surfaceContainerHighest  ← 对话框 / 菜单
+/// ```
+///
+/// 越靠上越亮。这三档之间的明度差必须在暗色下**肉眼可辨**，
+/// 否则卡片会看起来像「贴在面板上的一张贴纸」。主题层已在
+/// `theme.dart` 的 `_tintNeutrals` 里统一做了色相染色，此处只做取用。
 abstract final class Surfaces {
-  /// 卡片填充色
+  /// 卡片填充色：比面板亮一档
   static Color card(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -268,16 +283,31 @@ abstract final class Surfaces {
         : scheme.surfaceContainerLowest;
   }
 
-  /// 次级面板填充色
+  /// 次级面板填充色：分栏背景、列表容器
   static Color panel(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark ? scheme.surfaceContainer : scheme.surfaceContainerLow;
   }
 
+  /// 浮层填充色：对话框、菜单、下拉 —— 必须高于 [card]
+  static Color overlay(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? scheme.surfaceContainerHighest : scheme.surface;
+  }
+
   /// 分隔线颜色
-  static Color divider(BuildContext context) =>
-      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.6);
+  ///
+  /// 与 `theme.dart` 的 `dividerTheme` 保持同值，避免「手写 Container
+  /// 描边」和「Divider 组件」在同一条视觉线上出现两种深浅。
+  static Color divider(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Theme.of(context)
+        .colorScheme
+        .outlineVariant
+        .withValues(alpha: isDark ? 0.55 : 0.6);
+  }
 
   /// 柔和阴影：亮色主题下才明显，暗色主题靠层级区分
   static List<BoxShadow> softShadow(BuildContext context) {
@@ -295,27 +325,27 @@ abstract final class Surfaces {
 }
 
 /// 统一卡片装饰：圆角 + 填充 + 描边 + 柔和阴影
+///
+/// ## 为什么去掉了原来的主色渐变
+///
+/// 旧实现叠了一条 `primary @ 3%` 的对角线性渐变。3% alpha 在暗色底上
+/// 几乎不可见 —— 它不产生任何可辨的视觉信息，却带来三个真实代价：
+///
+/// 1. 卡片颜色**不再是纯色**，与 `cardTheme.color` 对不上，用户在
+///    设置里换主题种子时会看到卡片有轻微色偏
+/// 2. 每张卡片多一层 shader，长列表滚动时是可测量的开销
+/// 3. `0x03` 级别的不透明度正是「AI 生成 UI」爱加的伪精致细节
+///
+/// 层次感交给**表面明度**（`Surfaces` 的三级梯度）表达，比叠渐变可靠。
 BoxDecoration cardDecoration(
   BuildContext context, {
   bool elevated = true,
   Color? color,
 }) {
-  final scheme = Theme.of(context).colorScheme;
   return BoxDecoration(
     color: color ?? Surfaces.card(context),
     borderRadius: Radii.cardRadius,
     border: Border.all(color: Surfaces.divider(context)),
     boxShadow: elevated ? Surfaces.softShadow(context) : null,
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: <Color>[
-        (color ?? Surfaces.card(context)),
-        Color.alphaBlend(
-          scheme.primary.withValues(alpha: 0.03),
-          color ?? Surfaces.card(context),
-        ),
-      ],
-    ),
   );
 }

@@ -166,6 +166,11 @@ class I18n {
       homeGoDeployPage = 'home_go_deploy_page',
       homeLoadingAutoLogin = 'home_loading_auto_login',
       homeLoadingConfigDetail = 'home_loading_config_detail';
+  static const String homeStartupOverline = 'home_startup_overline',
+      homeStartupStepDeploy = 'home_startup_step_deploy',
+      homeStartupStepLogin = 'home_startup_step_login',
+      homeStartupStepConfig = 'home_startup_step_config',
+      homeStartupLogTitle = 'home_startup_log_title';
   static const String homeScriptAbnormal = 'home_script_abnormal',
       homeScriptOffline = 'home_script_offline',
       homeScriptSearchHint = 'home_script_search_hint';

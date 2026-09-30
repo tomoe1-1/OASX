@@ -32,6 +32,39 @@ String _resolveRoutePath(BuildContext context, {String? routePath}) {
   return Get.currentRoute;
 }
 
+/// 给浅色标题栏里的白发头像一块深色底，保持小尺寸下的辨识度。
+class _BrandIcon extends StatelessWidget {
+  const _BrandIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF17344C),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF476B84)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.asset(
+          'assets/images/Icon-app.png',
+          width: 30,
+          height: 30,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(
+            Icons.auto_awesome_rounded,
+            size: 23,
+            color: Color(0xFFE8F5FB),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class HomeTitleBar extends StatelessWidget {
   const HomeTitleBar({super.key});
 
@@ -42,7 +75,7 @@ class HomeTitleBar extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
+          const _BrandIcon(),
           const SizedBox(width: Spacing.mdPlus),
           Flexible(child: _TitleLabel(text: 'OASX / ${I18n.home.tr}')),
         ],
@@ -70,7 +103,7 @@ class SettingTitle extends StatelessWidget {
             BackButton(onPressed: _backHomeOrPop),
             const SizedBox(width: Spacing.sm),
           ],
-          Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
+          const _BrandIcon(),
           const SizedBox(width: Spacing.mdPlus),
           Flexible(child: _TitleLabel(text: 'OASX / ${I18n.setting.tr}')),
         ],
@@ -108,12 +141,15 @@ class ServerTitle extends StatelessWidget {
                 !Get.find<ServerController>().isDeployLoading.value) {
               return const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [BackButton(), SizedBox(width: Spacing.sm)],
+                children: [
+                  BackButton(),
+                  SizedBox(width: Spacing.sm),
+                ],
               );
             }
             return const SizedBox.shrink();
           }),
-          Image.asset('assets/images/Icon-app.png', height: 30, width: 30),
+          const _BrandIcon(),
           const SizedBox(width: Spacing.mdPlus),
           const Flexible(child: _TitleLabel(text: 'OASX / Server')),
         ],
