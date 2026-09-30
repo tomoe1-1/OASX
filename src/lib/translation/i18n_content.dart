@@ -159,6 +159,10 @@ class I18n {
   static const String homeRunningTask = 'home_running_task',
       homePendingTask = 'home_pending_task',
       homeWaitingTask = 'home_waiting_task';
+  static const String homeCurrentTask = 'home_current_task',
+      homeNextTask = 'home_next_task',
+      homeNoRunningTask = 'home_no_running_task',
+      homeCurrentTaskLoading = 'home_current_task_loading';
   static const String homeConnectionRetryHint = 'home_connection_retry_hint',
       homeConnectionRetryAction = 'home_connection_retry_action',
       homeEmptyScriptHint = 'home_empty_script_hint';

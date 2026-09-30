@@ -17,77 +17,112 @@ class ConfigCollectionTaskPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final preview = _firstTaskPreview(script);
-      if (preview == null) {
-        return Text(
-          I18n.homeNoTask.tr,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
-          style: Theme.of(context).textTheme.bodyMedium,
-        );
-      }
-      return Row(
+      final isRunning = script.state.value == ScriptState.running;
+      final runningName = isRunning
+          ? script.runningTask.value.taskName.value.trim()
+          : '';
+      final next = _nextTaskPreview(runningName);
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            preview.icon,
-            size: 14,
-            color: preview.color(context),
+          _TaskPreviewRow(
+            key: const ValueKey('config-current-task'),
+            label: I18n.homeCurrentTask.tr,
+            text: runningName.isNotEmpty
+                ? runningName.tr
+                : (isRunning && !script.currentTaskKnown.value
+                      ? I18n.homeCurrentTaskLoading.tr
+                      : I18n.homeNoRunningTask.tr),
+            icon: Icons.bolt_rounded,
+            color: runningName.isNotEmpty
+                ? SemanticColors.success(context)
+                : SemanticColors.neutral(context),
           ),
-          const SizedBox(width: Spacing.xs),
-          Expanded(
-            child: Text(
-              preview.displayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
+          const SizedBox(height: Spacing.xs),
+          _TaskPreviewRow(
+            key: const ValueKey('config-next-task'),
+            label: I18n.homeNextTask.tr,
+            text: next?.displayName ?? I18n.homeNoTask.tr,
+            icon: next?.icon ?? Icons.schedule_rounded,
+            color: next?.color(context) ?? SemanticColors.neutral(context),
           ),
         ],
       );
     });
   }
 
-  _TaskPreviewData? _firstTaskPreview(ScriptModel model) {
-    final runningTask = model.runningTask.value;
-    final runningName = runningTask.taskName.value.trim();
-    if (runningName.isNotEmpty) {
-      return _TaskPreviewData(
-        type: _PreviewTaskType.running,
-        name: runningName,
-      );
-    }
-    for (final task in model.pendingTaskList) {
-      final taskName = task.taskName.value.trim();
-      if (taskName.isEmpty) {
-        continue;
+  _TaskPreviewData? _nextTaskPreview(String runningName) {
+    // Preserve backend scheduler order and skip any duplicated running entry.
+    for (final task in script.pendingTaskList) {
+      final name = task.taskName.value.trim();
+      if (name.isNotEmpty && name != runningName) {
+        return _TaskPreviewData(type: _PreviewTaskType.pending, name: name);
       }
-      return _TaskPreviewData(
-        type: _PreviewTaskType.pending,
-        name: taskName,
-      );
     }
-    for (final task in model.waitingTaskList) {
-      final taskName = task.taskName.value.trim();
-      if (taskName.isEmpty) {
-        continue;
+    for (final task in script.waitingTaskList) {
+      final name = task.taskName.value.trim();
+      if (name.isNotEmpty && name != runningName) {
+        return _TaskPreviewData(
+          type: _PreviewTaskType.waiting,
+          name: name,
+          timeText: showWaitingTime ? task.nextRun.value.trim() : '',
+        );
       }
-      return _TaskPreviewData(
-        type: _PreviewTaskType.waiting,
-        name: taskName,
-        timeText: showWaitingTime ? task.nextRun.value.trim() : '',
-      );
     }
     return null;
   }
 }
 
-enum _PreviewTaskType {
-  running,
-  pending,
-  waiting,
+class _TaskPreviewRow extends StatelessWidget {
+  const _TaskPreviewRow({
+    super.key,
+    required this.label,
+    required this.text,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final String text;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelMedium;
+    return Tooltip(
+      message: '$label：$text',
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: Spacing.xs),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$label：',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  TextSpan(text: text),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: style,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+enum _PreviewTaskType { pending, waiting }
 
 class _TaskPreviewData {
   const _TaskPreviewData({
@@ -105,31 +140,16 @@ class _TaskPreviewData {
     if (timeText.isEmpty || type != _PreviewTaskType.waiting) {
       return localizedName;
     }
-    return '$localizedName ${_timeOfDayText(timeText)}';
+    return '$localizedName ${timeText.split(' ').last}';
   }
 
-  String _timeOfDayText(String value) {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
-      return normalized;
-    }
-    final parts = normalized.split(' ');
-    return parts.isEmpty ? normalized : parts.last;
-  }
+  IconData get icon => switch (type) {
+    _PreviewTaskType.pending => Icons.layers_rounded,
+    _PreviewTaskType.waiting => Icons.schedule_rounded,
+  };
 
-  IconData get icon {
-    return switch (type) {
-      _PreviewTaskType.running => Icons.bolt_rounded,
-      _PreviewTaskType.pending => Icons.layers_rounded,
-      _PreviewTaskType.waiting => Icons.schedule_rounded,
-    };
-  }
-
-  Color color(BuildContext context) {
-    return switch (type) {
-      _PreviewTaskType.running => SemanticColors.success(context),
-      _PreviewTaskType.pending => SemanticColors.warning(context),
-      _PreviewTaskType.waiting => SemanticColors.neutral(context),
-    };
-  }
+  Color color(BuildContext context) => switch (type) {
+    _PreviewTaskType.pending => SemanticColors.warning(context),
+    _PreviewTaskType.waiting => SemanticColors.neutral(context),
+  };
 }

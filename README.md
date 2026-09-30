@@ -3,7 +3,9 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.0.0** —— 包含主页动态背景、启动页重绘，以及窗口位置和 OAS 目录恢复修复。
+**当前版本：v2.0.1** —— 左侧配置卡分别显示真实当前任务和下个任务，保留主页动态背景、启动页及窗口恢复修复。
+
+后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
 本次启动修复详见 [启动修复说明](./启动修复说明.md)。窗口位置配置异常或显示器断开时恢复为居中窗口；保存的 OAS 目录失效时识别相邻有效安装，无法识别则提供目录选择和重新连接入口。
 
@@ -11,7 +13,7 @@
 
 | 方式 | 适合谁 | 怎么做 |
 |---|---|---|
-| **下载发行包**（推荐普通用户） | 只想直接用 | 到 [Releases](../../releases/latest) 下载 `oasx_v2.0.0_windows.zip`，解压即用 |
+| **下载发行包**（推荐普通用户） | 只想直接用 | 到 [Releases](../../releases/latest) 查看已发布版本；本仓库根目录也包含当前版运行文件 |
 | **clone 本仓库** | 想改代码 / 看实现 | `git clone`，根目录已是可运行的发行目录，同时含 `src/` 完整源码 |
 
 > 本仓库的**根目录同时就是发行目录** —— clone 下来双击 `oasx.exe` 即可运行，
@@ -76,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.0.0 --build-number 20
+flutter build windows --release --build-name 2.0.1 --build-number 21
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -99,7 +101,7 @@ flutter build windows --release --build-name 2.0.0 --build-number 20
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.0.0` / `20` |
+| version / build | `2.0.1` / `21` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -107,10 +109,10 @@ flutter build windows --release --build-name 2.0.0 --build-number 20
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `6CFDAAFC2679E4650162DCF191AF45A1F2EECB1D49AB4FB8571F266FBFBFAFE1` |
-| `oasx.exe` | `9B450BD299A3F591380FC1471A1118D877258E9F38A34E222ABB1DB949EB60D2` |
+| `data/app.so` | `DCCD85340E23A4BCFCF202CB241AD7FEFFC16ECBA446AF98DE09EF7EB473ECCE` |
+| `oasx.exe` | `ED287439AC0902FE8DD4FA1C3BA08C99E1B6192916273707E972A5B861BB369E` |
 
-启动页、主页背景、窗口状态和 OAS 目录恢复相关测试共 **67 项通过**；修复版已在本机核对原生窗口可见状态和坐标。启动线稿右下角、主页日志区透明度及应用图标已在界面版本验收时检查。
+当前/下个任务、实时状态、启动页、主页背景、窗口状态和 OAS 目录恢复相关测试共 **102 项通过**。启动线稿右下角、主页日志区透明度及应用图标已在界面版本验收时检查。
 
 ## 自动更新
 
@@ -132,6 +134,13 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.0.1 任务显示修复
+
+- 配置卡分两行显示“当前任务”和“下个任务”，窄面板也保留两行。
+- 旧 OAS 后端的 `schedule.running` 可能是调度候选；当前任务由 `Scheduler: Start/End task` 运行日志确认，候选保留在下个任务队列。
+- 中途连接时回溯近期运行日志恢复当前任务；无法确认时显示“正在获取”，停止后显示“暂无运行任务”。
+- 下个任务保留后端的调度顺序，优先待执行队列，然后等待队列，并排除当前任务。
 
 ## 仓库说明
 

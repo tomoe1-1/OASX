@@ -5,8 +5,7 @@ enum ScriptState {
   inactive,
   running,
   warning,
-  updating,
-  ;
+  updating;
 
   static ScriptState getState(dynamic value) {
     return switch (value) {
@@ -23,29 +22,35 @@ class ScriptModel {
   String name;
   final state = ScriptState.updating.obs;
   final runningTask = TaskItemModel('', '', '').obs;
+  final currentTaskKnown = false.obs;
   final pendingTaskList = <TaskItemModel>[].obs;
   final waitingTaskList = <TaskItemModel>[].obs;
 
   ScriptModel(this.name);
 
-  void update(
-      {ScriptState? state,
-      TaskItemModel? runningTask,
-      List<TaskItemModel>? pendingTaskList,
-      List<TaskItemModel>? waitingTaskList}) {
+  void update({
+    ScriptState? state,
+    TaskItemModel? runningTask,
+    bool? currentTaskKnown,
+    List<TaskItemModel>? pendingTaskList,
+    List<TaskItemModel>? waitingTaskList,
+  }) {
     if (state != null && this.state.value != state) this.state.value = state;
     if (runningTask != null && this.runningTask.value != runningTask) {
       this.runningTask.value = runningTask;
+    }
+    if (currentTaskKnown != null) {
+      this.currentTaskKnown.value = currentTaskKnown;
     }
     if (pendingTaskList != null) this.pendingTaskList.value = pendingTaskList;
     if (waitingTaskList != null) this.waitingTaskList.value = waitingTaskList;
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'state': state.toJson(),
-        'runningTask': runningTask.toJson(),
-        'pendingTaskList': pendingTaskList.toJson(),
-        'waitingTaskList': waitingTaskList.toJson()
-      };
+    'name': name,
+    'state': state.toJson(),
+    'runningTask': runningTask.toJson(),
+    'pendingTaskList': pendingTaskList.toJson(),
+    'waitingTaskList': waitingTaskList.toJson(),
+  };
 }

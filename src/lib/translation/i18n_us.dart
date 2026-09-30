@@ -129,6 +129,10 @@ final Map<String, String> _us_ui = {
   I18n.homeRunningTask: 'Running task',
   I18n.homePendingTask: 'Pending task',
   I18n.homeWaitingTask: 'Waiting task',
+  I18n.homeCurrentTask: 'Current task',
+  I18n.homeNextTask: 'Next task',
+  I18n.homeNoRunningTask: 'No running task',
+  I18n.homeCurrentTaskLoading: 'Loading',
   I18n.homeConnectionRetryHint:
       'Please confirm the backend service has started and user settings are correct',
   I18n.homeConnectionRetryAction: 'Refresh',

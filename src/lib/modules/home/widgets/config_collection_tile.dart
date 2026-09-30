@@ -183,6 +183,8 @@ class _ScriptMeta extends StatelessWidget {
                   ),
                   const SizedBox(height: Spacing.xs),
                   ConfigCollectionScriptLabel(script: script, centered: true),
+                  const SizedBox(height: Spacing.xsPlus),
+                  ConfigCollectionTaskPreview(script: script),
                 ],
               ),
             ),

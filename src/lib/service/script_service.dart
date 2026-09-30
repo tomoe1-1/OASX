@@ -9,24 +9,56 @@ import 'package:oasx/modules/common/models/storage_key.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
 import 'package:oasx/modules/home/models/taskitem_model.dart';
 import 'package:oasx/service/websocket_service.dart';
+import 'package:oasx/service/script_task_tracker.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/utils/extension_utils.dart';
 import 'package:oasx/utils/platform_utils.dart';
 import 'package:oasx/utils/time_utils.dart';
 import 'package:oasx/modules/log/script_log_controller.dart';
 import 'package:oasx/modules/log/script_log_browser_controller.dart';
+import 'package:oasx/modules/log/log_browser_models.dart';
 
 part 'script_service_ws.dart';
 part 'script_service_auto.dart';
 part 'script_service_config.dart';
 
+typedef ScriptTaskHistoryLoader =
+    Future<ScriptLogWindow> Function(
+      String name, {
+      String? cursor,
+      required int limitLines,
+      required int limitBytes,
+    });
+
 class ScriptService extends GetxService {
+  ScriptService({
+    ScriptTaskHistoryLoader? taskHistoryLoader,
+    GetStorage? storage,
+  }) : _taskHistoryLoader = taskHistoryLoader ?? _loadTaskHistory,
+       _storage = storage ?? GetStorage();
+
+  final ScriptTaskHistoryLoader _taskHistoryLoader;
+
+  static Future<ScriptLogWindow> _loadTaskHistory(
+    String name, {
+    String? cursor,
+    required int limitLines,
+    required int limitBytes,
+  }) => ApiClient().getScriptLogWindow(
+    name,
+    cursor: cursor,
+    limitLines: limitLines,
+    limitBytes: limitBytes,
+  );
+
   // ignore: unused_field
-  final _storage = GetStorage();
+  final GetStorage _storage;
   final wsService = Get.find<WebSocketService>();
   final scriptModelMap = <String, ScriptModel>{}.obs;
   final scriptOrderList = <String>[].obs;
   final autoScriptList = <String>[].obs;
+  final Map<String, ScriptTaskTracker> _taskTrackers = {};
+  final Map<String, int> _taskRecoveryTokens = {};
 
   bool get _shouldSkipBackendReload {
     return PlatformUtils.isWeb && !ApiClient().hasConfiguredBackendAddress;
@@ -53,6 +85,8 @@ class ScriptService extends GetxService {
     ]);
     scriptModelMap.clear();
     super.onClose();
+    _taskTrackers.clear();
+    _taskRecoveryTokens.clear();
   }
 
   void addScriptModel(dynamic sm) {
@@ -82,6 +116,8 @@ class ScriptService extends GetxService {
   void deleteScriptModel(String name) {
     if (!scriptModelMap.containsKey(name)) return;
     scriptModelMap.remove(name);
+    _taskTrackers.remove(name);
+    _taskRecoveryTokens.remove(name);
     wsService.close(name);
     autoScriptList.removeWhere((e) => e == name);
     scriptOrderList.removeWhere((e) => e == name);
@@ -177,5 +213,7 @@ class ScriptService extends GetxService {
     }
     scriptModelMap.clear();
     scriptOrderList.clear();
+    _taskTrackers.clear();
+    _taskRecoveryTokens.clear();
   }
 }
