@@ -18,7 +18,7 @@
 ## 目录结构
 
 ```
-OASX-2.x/
+OASX/                            # 仓库根目录 = 发行目录
 ├─ oasx.exe                      # 主程序入口（双击运行）
 ├─ flutter_windows.dll           # Flutter Windows 运行时
 ├─ *_plugin.dll                  # 各功能插件（见下表）
