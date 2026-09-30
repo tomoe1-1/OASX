@@ -1,12 +1,12 @@
 {
   "version": "2.0.0",
   "build": 20,
+  "revision": "startup-recovery-20260930",
   "flutter": "3.47.5",
   "dart": "3.13.4",
-  "platform": "windows-x64",
+  "testsPassed": 67,
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
   "defaultOasBranch": "self",
-  "defaultOasRoot": "..\\OAS\\OnmyojiAutoScript-easy-install",
-  "appSoSha256": "134F8F658A672E063F736496246F9E9E46B2B191CEB8E88BA28E2DAF1A5FC08E",
+  "appSoSha256": "6CFDAAFC2679E4650162DCF191AF45A1F2EECB1D49AB4FB8571F266FBFBFAFE1",
   "exeSha256": "9B450BD299A3F591380FC1471A1118D877258E9F38A34E222ABB1DB949EB60D2"
 }

@@ -46,9 +46,30 @@ extension _HomeViewActions on _HomeViewState {
               );
             }),
             const SizedBox(height: Spacing.md),
-            Text(
-              I18n.homeConnectionRetryHint.tr,
-              textAlign: TextAlign.center,
+            Text(I18n.homeConnectionRetryHint.tr, textAlign: TextAlign.center),
+            if (Get.isRegistered<ServerController>() &&
+                !Get.find<ServerController>().rootPathAuthenticated.value) ...[
+              const SizedBox(height: Spacing.md),
+              const Text('OAS 目录无效，请重新选择安装目录。'),
+              const SizedBox(height: Spacing.sm),
+              SelectableText(
+                Get.find<ServerController>().rootPathServer.value,
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const SizedBox(height: Spacing.md),
+            OutlinedButton.icon(
+              onPressed: () => Get.toNamed('/server'),
+              icon: const Icon(Icons.folder_open_rounded),
+              label: Text(I18n.homeGoDeployPage.tr),
+            ),
+            const SizedBox(height: Spacing.sm),
+            TextButton.icon(
+              onPressed: controller.isStartupChecking.value
+                  ? null
+                  : controller.retryStartupConnection,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(I18n.homeConnectionRetryAction.tr),
             ),
           ],
         ),

@@ -17,6 +17,8 @@ import 'package:oasx/service/locale_service.dart';
 import 'package:oasx/service/script_service.dart';
 
 class ServerController extends GetxController with LogMixin {
+  ServerController({GetStorage? storage}) : _storage = storage ?? GetStorage();
+
   @override
   int get maxLines => 1000;
 
@@ -26,7 +28,7 @@ class ServerController extends GetxController with LogMixin {
   final deployContent = ''.obs;
   final autoLoginAfterDeploy = false.obs;
   final isDeployLoading = false.obs;
-  final _storage = GetStorage();
+  final GetStorage _storage;
   Shell? shell;
   var shellController = ShellLinesController();
   var shellErrorController = ShellLinesController();
@@ -36,11 +38,18 @@ class ServerController extends GetxController with LogMixin {
 
   @override
   void onInit() {
-    rootPathServer.value =
-        _storage.read(StorageKey.rootPathServer.name) ??
-        (Platform.isWindows
-            ? resolveDefaultOasRootPath()
-            : 'Please set OAS root path');
+    final storedRoot = _storage.read(StorageKey.rootPathServer.name);
+    final savedRoot = storedRoot is String ? storedRoot : null;
+    rootPathServer.value = Platform.isWindows
+        ? resolveStartupOasRootPath(
+            savedRootPath: savedRoot,
+            isValidRoot: authenticatePath,
+          )
+        : (savedRoot ?? 'Please set OAS root path');
+    if (rootPathServer.value != savedRoot &&
+        authenticatePath(rootPathServer.value)) {
+      _storage.write(StorageKey.rootPathServer.name, rootPathServer.value);
+    }
     autoLoginAfterDeploy.value =
         _storage.read(StorageKey.autoLoginAfterDeploy.name) ?? false;
     shell = getShell;
@@ -330,6 +339,13 @@ class ServerController extends GetxController with LogMixin {
   }
 
   Future<void> run() async {
+    // 错误/搬迁后的目录不能触发停止服务、拉取仓库和依赖安装。
+    if (!authenticatePath(rootPathServer.value)) {
+      rootPathAuthenticated.value = false;
+      final message = 'OAS 目录无效，请在部署页面重新选择：${rootPathServer.value}';
+      addLog('ERROR: $message');
+      throw StateError(message);
+    }
     isDeployLoading.value = true;
     try {
       _step(1, '正在停止旧服务…');

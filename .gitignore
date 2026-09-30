@@ -17,6 +17,7 @@ logs/
 .release_body*.md
 *.before-auto-repair
 *.before-*
+_backup*/
 
 # ── Flutter / Dart 构建产物 ────────────────────────────────
 # src/ 是完整 Flutter 工程，以下为生成物，不入库

@@ -90,10 +90,24 @@ extension HomeDashboardStartupX on HomeDashboardController {
       final serverController = Get.isRegistered<ServerController>()
           ? Get.find<ServerController>()
           : Get.put<ServerController>(ServerController(), permanent: true);
+      if (!serverController.authenticatePath(
+        serverController.rootPathServer.value,
+      )) {
+        serverController.rootPathAuthenticated.value = false;
+        serverController.addLog(
+          'ERROR: OAS 目录无效，请在部署页面重新选择：${serverController.rootPathServer.value}',
+        );
+        isStartupConnectionFailed.value = true;
+        return;
+      }
       startupLoadingMessage.value = I18n.homeLoadingAutoDeploying;
       isStartupAutoDeploying.value = true;
       try {
-        await serverController.run();
+        final deployed = await serverController.runExclusive();
+        if (!deployed) {
+          isStartupConnectionFailed.value = true;
+          return;
+        }
         await _waitUntilDeployFinished(serverController);
       } finally {
         isStartupAutoDeploying.value = false;
@@ -108,6 +122,11 @@ extension HomeDashboardStartupX on HomeDashboardController {
       }
 
       isStartupConnectionFailed.value = true;
+    } catch (error) {
+      isStartupConnectionFailed.value = true;
+      if (Get.isRegistered<ServerController>()) {
+        Get.find<ServerController>().addLog('ERROR: 启动连接失败：$error');
+      }
     } finally {
       isStartupChecking.value = false;
       startupLoadingMessage.value = '';

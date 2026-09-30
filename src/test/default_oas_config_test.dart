@@ -14,6 +14,57 @@ void main() {
     );
   });
 
+  group('startup directory recovery', () {
+    const executable = r'F:\oas\OASX-2.0.0\oasx.exe';
+    const validRoot = r'F:\oas\OAS\OnmyojiAutoScript-easy-install';
+
+    test('relocated installation replaces the report stale saved path', () {
+      expect(
+        resolveStartupOasRootPath(
+          executablePath: executable,
+          savedRootPath: r'F:\oas\OnmyojiAutoScript-easy-install',
+          isValidRoot: (root) => root == validRoot,
+        ),
+        validRoot,
+      );
+    });
+
+    test('valid explicit installation outside the app folder wins', () {
+      const customRoot = r'D:\private\OAS';
+      expect(
+        resolveStartupOasRootPath(
+          executablePath: executable,
+          savedRootPath: customRoot,
+          isValidRoot: (root) => root == validRoot || root == customRoot,
+        ),
+        customRoot,
+      );
+    });
+
+    test('supports a direct sibling installation', () {
+      const directRoot = r'F:\oas\OnmyojiAutoScript-easy-install';
+      expect(
+        resolveStartupOasRootPath(
+          executablePath: executable,
+          isValidRoot: (root) => root == directRoot,
+        ),
+        directRoot,
+      );
+    });
+
+    test('unverified candidates do not replace saved settings', () {
+      const missingRoot = r'D:\disconnected-drive\OAS';
+      expect(
+        resolveStartupOasRootPath(
+          executablePath: executable,
+          savedRootPath: missingRoot,
+          isValidRoot: (_) => false,
+        ),
+        missingRoot,
+      );
+    });
+  });
+
   group('private repository defaults', () {
     late Directory root;
 

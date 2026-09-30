@@ -9,7 +9,9 @@ import 'package:oasx/modules/common/models/window_state.dart';
 import 'package:oasx/modules/common/widgets/exit_confirm_dialog.dart';
 import 'package:oasx/service/app_exit_service.dart';
 import 'package:oasx/service/system_tray_service.dart';
+import 'package:oasx/service/window_geometry.dart';
 import 'package:oasx/utils/platform_utils.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
 part 'window_service_exit.dart';
@@ -29,6 +31,8 @@ class WindowService extends GetxService with WindowListener {
 
   Timer? _debounceTimer;
   DateTime? _lastSaveTime;
+  bool _isSavingWindowState = false;
+  List<Rect> _displayWorkAreas = [];
   final enableWindowState = false.obs;
   final enableSystemTray = false.obs;
 
@@ -60,6 +64,18 @@ class WindowService extends GetxService with WindowListener {
     final lastState = await initWindowState();
 
     await windowManager.waitUntilReadyToShow(buildWindowOptions(lastState));
+    // Apply restored bounds after the plugin restores any minimized/maximized
+    // native state; otherwise Windows can replace the requested normal bounds.
+    if (lastState != null) {
+      await windowManager.setBounds(
+        Rect.fromLTWH(
+          lastState.x,
+          lastState.y,
+          lastState.width,
+          lastState.height,
+        ),
+      );
+    }
     windowManager.addListener(this);
 
     // waitUntilReadyToShow 只配置窗口，不会替应用调用 show()。
@@ -140,7 +156,12 @@ class WindowService extends GetxService with WindowListener {
     Size? minimumSize,
   }) {
     if (lastState == null) {
-      return _defaultDesktopWindowSize;
+      if (_displayWorkAreas.isEmpty) return _defaultDesktopWindowSize;
+      return fitWindowSize(
+        _defaultDesktopWindowSize,
+        _displayWorkAreas.first,
+        minimumSize: minimumSize ?? Size.zero,
+      );
     }
     if (minimumSize == null) {
       return Size(lastState.width, lastState.height);
@@ -154,35 +175,97 @@ class WindowService extends GetxService with WindowListener {
   }
 
   Future<WindowStateModel?> initWindowState() async {
+    _displayWorkAreas = await _readDisplayWorkAreas();
     if (!enableWindowState.value) return null;
-    final jsonStr = _storage.read(StorageKey.windowState.name);
-    if (jsonStr == null) return null;
-    WindowStateModel? lastState = WindowStateModel.fromJson(
-      json.decode(jsonStr) as Map<String, dynamic>,
+    return restoreWindowGeometry(
+      _storage.read(StorageKey.windowState.name),
+      workAreas: _displayWorkAreas,
+      minimumSize: PlatformUtils.isWindows
+          ? _minimumWindowsWindowSize
+          : Size.zero,
     );
-    await windowManager.setBounds(
-      Rect.fromLTWH(
-        lastState.x,
-        lastState.y,
-        lastState.width,
-        lastState.height,
-      ),
-    );
-    return lastState;
+  }
+
+  Future<List<Rect>> _readDisplayWorkAreas() async {
+    try {
+      final displays = await screenRetriever.getAllDisplays();
+      final areas = displays
+          .map((display) {
+            final position = display.visiblePosition ?? Offset.zero;
+            final size = display.visibleSize ?? display.size;
+            return Rect.fromLTWH(
+              position.dx,
+              position.dy,
+              size.width,
+              size.height,
+            );
+          })
+          .where(isValidWindowRect)
+          .toList();
+      if (areas.length > 1) {
+        try {
+          final primary = await screenRetriever.getPrimaryDisplay();
+          final position = primary.visiblePosition ?? Offset.zero;
+          final size = primary.visibleSize ?? primary.size;
+          final primaryBounds = Rect.fromLTWH(
+            position.dx,
+            position.dy,
+            size.width,
+            size.height,
+          );
+          final index = areas.indexOf(primaryBounds);
+          if (index > 0) {
+            final primaryArea = areas.removeAt(index);
+            areas.insert(0, primaryArea);
+          }
+        } catch (e) {
+          // The complete display list remains usable if only primary lookup fails.
+          printError(info: 'primary display lookup failed: $e');
+        }
+      }
+      return areas;
+    } catch (e) {
+      printError(info: 'screen work area lookup failed: $e');
+      // Unverified saved coordinates are unsafe; use the plugin's default center.
+      return [];
+    }
   }
 
   Future<void> _saveWindowState() async {
-    if (!PlatformUtils.isDesktop || !enableWindowState.value) return;
-    final size = await windowManager.getSize();
-    final pos = await windowManager.getPosition();
-    final state = WindowStateModel(
-      x: pos.dx,
-      y: pos.dy,
-      width: size.width,
-      height: size.height,
-    );
-    _storage.write(StorageKey.windowState.name, json.encode(state.toJson()));
-    printInfo(info: 'save window state:${state.toJson()}');
+    if (!PlatformUtils.isDesktop ||
+        !enableWindowState.value ||
+        _isSavingWindowState) {
+      return;
+    }
+    _isSavingWindowState = true;
+    try {
+      if (await windowManager.isMinimized() ||
+          await windowManager.isMaximized()) {
+        return;
+      }
+      final bounds = await windowManager.getBounds();
+      final workAreas = await _readDisplayWorkAreas();
+      // A minimize/maximize can begin while querying native bounds/displays.
+      final state = windowGeometryToSave(
+        bounds,
+        isMinimized: await windowManager.isMinimized(),
+        isMaximized: await windowManager.isMaximized(),
+        workAreas: workAreas,
+        minimumSize: PlatformUtils.isWindows
+            ? _minimumWindowsWindowSize
+            : Size.zero,
+      );
+      if (state == null) return;
+      await _storage.write(
+        StorageKey.windowState.name,
+        json.encode(state.toJson()),
+      );
+      printInfo(info: 'save window state:${state.toJson()}');
+    } catch (e) {
+      printError(info: 'save window state failed: $e');
+    } finally {
+      _isSavingWindowState = false;
+    }
   }
 
   void _scheduleSave() {
