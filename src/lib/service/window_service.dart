@@ -145,7 +145,9 @@ class WindowService extends GetxService with WindowListener {
       size: initialSize,
       center: lastState == null,
       minimumSize: minimumSize,
-      backgroundColor: Colors.transparent,
+      // The app paints its own backdrop. Native transparency enables Windows
+      // transparent composition and can expose stale surface bounds on resize.
+      backgroundColor: const Color(0xFF0D1015),
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
     );

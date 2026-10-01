@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.0.1** —— 左侧配置卡分别显示真实当前任务和下个任务，保留主页动态背景、启动页及窗口恢复修复。
+**当前版本：v2.0.2** —— 修复 Windows 边缘缩放后的视口同步，标题栏改为深蓝灰风格；保留当前/下个任务显示和主页动态背景。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.0.1 --build-number 21
+flutter build windows --release --build-name 2.0.2 --build-number 22
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.0.1 --build-number 21
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.0.1` / `21` |
+| version / build | `2.0.2` / `22` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.0.1 --build-number 21
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `DCCD85340E23A4BCFCF202CB241AD7FEFFC16ECBA446AF98DE09EF7EB473ECCE` |
-| `oasx.exe` | `ED287439AC0902FE8DD4FA1C3BA08C99E1B6192916273707E972A5B861BB369E` |
+| `data/app.so` | `9722041ED913CB66ECA204BE7390E6237846867280D1E6E764B4E38AF29835BB` |
+| `oasx.exe` | `639371B0E47E6E36B41AAB1D2C760F79C4964A09AA3BA7F9D75D4108194A30E8` |
 
-当前/下个任务、实时状态、启动页、主页背景、窗口状态和 OAS 目录恢复相关测试共 **102 项通过**。启动线稿右下角、主页日志区透明度及应用图标已在界面版本验收时检查。
+当前/下个任务、实时状态、启动页、主页背景、窗口状态、OAS 目录恢复和标题栏相关测试共 **108 项通过**。原生缩放测试另验证 3 个场景，包含四边连续缩放的 32 次尺寸变化。启动线稿右下角、主页日志区透明度及应用图标已在界面版本验收时检查。
 
 ## 自动更新
 
@@ -135,6 +135,18 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
 
+## 2.0.2 缩放与标题栏
+
+- 拖动外缘结束后校正 Flutter 子窗口并重发最终视口尺寸，原生窗口不再使用透明合成底色。
+- 标题栏改为深蓝灰渐变、浅色操作图标及青色细线，保留头像、设置、拖动与窗口按钮。
+- 本次重编 Windows 原生 runner；只替换 AOT 文件不能包含这项修复。
+- 回归说明见 [2.0.2 窗口缩放与标题栏](./docs/2.0.2窗口缩放与标题栏.md)。
+
+原生测试（Visual Studio C++ 与匹配的 Flutter SDK）：
+
+```powershell
+./tools/test_window_resize.ps1 -FlutterRoot C:\path\to\flutter
+```
 ## 2.0.1 任务显示修复
 
 - 配置卡分两行显示“当前任务”和“下个任务”，窄面板也保留两行。

@@ -1,12 +1,14 @@
 {
-  "version": "2.0.1",
-  "build": 21,
-  "revision": "current-next-task-20260930",
+  "version": "2.0.2",
+  "build": 22,
+  "revision": "window-resize-caption-20261001",
   "flutter": "3.47.5",
   "dart": "3.13.4",
-  "testsPassed": 102,
+  "testsPassed": 108,
+  "nativeResizeScenariosPassed": 3,
+  "nativeEdgeResizesChecked": 32,
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
   "defaultOasBranch": "self",
-  "appSoSha256": "DCCD85340E23A4BCFCF202CB241AD7FEFFC16ECBA446AF98DE09EF7EB473ECCE",
-  "exeSha256": "ED287439AC0902FE8DD4FA1C3BA08C99E1B6192916273707E972A5B861BB369E"
+  "appSoSha256": "9722041ED913CB66ECA204BE7390E6237846867280D1E6E764B4E38AF29835BB",
+  "exeSha256": "639371B0E47E6E36B41AAB1D2C760F79C4964A09AA3BA7F9D75D4108194A30E8"
 }

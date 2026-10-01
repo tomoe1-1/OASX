@@ -56,6 +56,10 @@ class Win32Window {
   RECT GetClientArea();
 
  protected:
+  // Fits hosted content to the current physical client area, including the
+  // final bounds reported after Windows exits its interactive resize loop.
+  void SyncChildToClient(bool resend_metrics = false);
+
   // Processes and route salient window messages for mouse handling,
   // size change and DPI. Delegates handling of these to member overloads that
   // inheriting classes can handle.

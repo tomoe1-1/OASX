@@ -194,18 +194,18 @@ Win32Window::MessageHandler(HWND hwnd,
 
       SetWindowPos(hwnd, nullptr, newRectSize->left, newRectSize->top, newWidth,
                    newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-
+      SyncChildToClient(true);
       return 0;
     }
     case WM_SIZE: {
-      RECT rect = GetClientArea();
-      if (child_content_ != nullptr) {
-        // Size and position the child window.
-        MoveWindow(child_content_, rect.left, rect.top, rect.right - rect.left,
-                   rect.bottom - rect.top, TRUE);
+      if (wparam != SIZE_MINIMIZED) {
+        SyncChildToClient();
       }
       return 0;
     }
+    case WM_EXITSIZEMOVE:
+      SyncChildToClient(true);
+      break;
 
     case WM_ACTIVATE:
       if (child_content_ != nullptr) {
@@ -241,12 +241,30 @@ Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
 void Win32Window::SetChildContent(HWND content) {
   child_content_ = content;
   SetParent(content, window_handle_);
-  RECT frame = GetClientArea();
-
-  MoveWindow(content, frame.left, frame.top, frame.right - frame.left,
-             frame.bottom - frame.top, true);
-
+  SyncChildToClient();
   SetFocus(child_content_);
+}
+
+void Win32Window::SyncChildToClient(bool resend_metrics) {
+  if (window_handle_ == nullptr || child_content_ == nullptr ||
+      IsIconic(window_handle_)) {
+    return;
+  }
+  const RECT frame = GetClientArea();
+  const LONG width = frame.right - frame.left;
+  const LONG height = frame.bottom - frame.top;
+  if (width > 0 && height > 0) {
+    // GetClientRect is already in physical pixels. Applying DPI scaling here
+    // would leave an uncovered strip at 125%/150% display scale.
+    MoveWindow(child_content_, frame.left, frame.top, width, height, TRUE);
+    if (resend_metrics) {
+      // MoveWindow may omit WM_SIZE when the HWND already has these bounds.
+      // Re-send the final physical viewport so Flutter also updates its metrics
+      // and schedules a frame after the native modal resize loop has finished.
+      SendMessage(child_content_, WM_SIZE, SIZE_RESTORED,
+                  MAKELPARAM(width, height));
+    }
+  }
 }
 
 RECT Win32Window::GetClientArea() {

@@ -140,11 +140,27 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,
                                                       lparam);
     if (result) {
+      // Plugin handling must not skip fitting the Flutter view to the native
+      // client area. In particular, preserve the final interactive size.
+      if ((message == WM_SIZE && wparam != SIZE_MINIMIZED) ||
+          message == WM_EXITSIZEMOVE || message == WM_DPICHANGED) {
+        SyncChildToClient(message == WM_EXITSIZEMOVE || message == WM_DPICHANGED);
+        flutter_controller_->ForceRedraw();
+      }
       return *result;
     }
   }
 
   switch (message) {
+    case WM_EXITSIZEMOVE: {
+      const LRESULT result =
+          Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+      if (flutter_controller_) {
+        // Request a final frame after the modal Windows sizing loop ends.
+        flutter_controller_->ForceRedraw();
+      }
+      return result;
+    }
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;

@@ -181,36 +181,31 @@ class _TitleLabel extends StatelessWidget {
     final brand = text.substring(0, separatorIndex);
     final page = text.substring(separatorIndex + 3);
     final baseStyle = Theme.of(context).textTheme.titleMedium;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          brand,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
-          style: baseStyle?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-            color: scheme.primary,
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: brand,
+            style: baseStyle?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+              color: scheme.primary,
+            ),
           ),
-        ),
-        Text(
-          '  /  ',
-          maxLines: 1,
-          softWrap: false,
-          style: baseStyle?.copyWith(color: scheme.outline),
-        ),
-        Flexible(
-          child: Text(
-            page,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            softWrap: false,
+          TextSpan(
+            text: '  /  ',
+            style: baseStyle?.copyWith(color: scheme.outline),
+          ),
+          TextSpan(
+            text: page,
             style: baseStyle?.copyWith(color: scheme.onSurfaceVariant),
           ),
-        ),
-      ],
+        ],
+      ),
+      style: baseStyle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
     );
   }
 }
