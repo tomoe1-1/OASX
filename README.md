@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.0.2** —— 修复 Windows 边缘缩放后的视口同步，标题栏改为深蓝灰风格；保留当前/下个任务显示和主页动态背景。
+**当前版本：v2.0.3** —— 标题栏与主页共用全幅动态背景，白色高透明框与更通透的工作台；修复分隔条拖动被窗口缩放中断后留下的临时栏宽。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.0.2 --build-number 22
+flutter build windows --release --build-name 2.0.3 --build-number 23
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.0.2 --build-number 22
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.0.2` / `22` |
+| version / build | `2.0.3` / `23` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.0.2 --build-number 22
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `9722041ED913CB66ECA204BE7390E6237846867280D1E6E764B4E38AF29835BB` |
-| `oasx.exe` | `639371B0E47E6E36B41AAB1D2C760F79C4964A09AA3BA7F9D75D4108194A30E8` |
+| `data/app.so` | `12AD46538704334255A3944989C13C26F4F99815852D94BCD3D203C648A752AC` |
+| `oasx.exe` | `86030CB54736801915A2FA63A3A7BA219CFA308B2104E6C3C72A3446545E5A42` |
 
-当前/下个任务、实时状态、启动页、主页背景、窗口状态、OAS 目录恢复和标题栏相关测试共 **108 项通过**。原生缩放测试另验证 3 个场景，包含四边连续缩放的 32 次尺寸变化。启动线稿右下角、主页日志区透明度及应用图标已在界面版本验收时检查。
+当前/下个任务、实时状态、启动页、主页背景、窗口状态、OAS 目录恢复、标题栏和实际工作台相关测试共 **116 项通过**。新增真实日志、统计、参数编辑页面的 45 次跨栏转换，以及左右分隔条拖动被缩窗中断的回归。沿用上一版已验证的原生尺寸同步补丁。实际电脑上的右侧残框仍需以安装后的鼠标拖动确认。
 
 ## 自动更新
 
@@ -134,6 +134,14 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.0.3 背景与跨栏缩放
+
+- 顶部与正文透出同一个全幅动态背景，标题栏使用白色高透明圆角框。
+- 继续提高工作台透明度，浅色主面板/右侧/日志内部不透明度为 50%/38%/44%。
+- 背景绘制限制在当前软件区域，首次加载不再替换正文父级结构。
+- 约束变化或手势取消时清理未完成的分隔条拖动，展开后恢复保存的栏宽。
+- 详细说明见 [2.0.3 背景与跨栏缩放](./docs/2.0.3背景与跨栏缩放.md)。
 
 ## 2.0.2 缩放与标题栏
 

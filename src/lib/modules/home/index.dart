@@ -65,35 +65,33 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    // 底衬包在 `SafeArea` **外层**：渐变要贴着窗口边缘铺满，
-    // 否则安全区内的 inset 会切掉画面右缘的渐隐带，露一条硬边。
-    final body = HomeBackdrop(
-      child: SafeArea(
-        child: Stack(
-          children: [
-            _buildDashboardBody(),
-            Obx(() {
-              final message = controller.startupLoadingMessage.value;
-              if (message.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Positioned.fill(
-                child: _StartupLoadingOverlay(
-                  message: message,
-                  autoDeploying: controller.isStartupAutoDeploying.value,
-                ),
-              );
-            }),
-          ],
-        ),
+    final body = SafeArea(
+      child: Stack(
+        children: [
+          _buildDashboardBody(),
+          Obx(() {
+            final message = controller.startupLoadingMessage.value;
+            if (message.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Positioned.fill(
+              child: _StartupLoadingOverlay(
+                message: message,
+                autoDeploying: controller.isStartupAutoDeploying.value,
+              ),
+            );
+          }),
+        ],
       ),
     );
 
     if (!widget.standalone) {
-      return body;
+      return HomeBackdrop(child: body);
     }
 
-    return Scaffold(
+    // One backdrop covers both caption and body; resizing preserves its state
+    // and the image stays continuous behind every translucent surface.
+    return HomeBackdropScaffold(
       appBar: buildPlatformAppBar(
         context,
         routePath: '/home',
@@ -140,8 +138,7 @@ class _StartupLoadingOverlay extends StatefulWidget {
   final bool autoDeploying;
 
   @override
-  State<_StartupLoadingOverlay> createState() =>
-      _StartupLoadingOverlayState();
+  State<_StartupLoadingOverlay> createState() => _StartupLoadingOverlayState();
 }
 
 class _StartupLoadingOverlayState extends State<_StartupLoadingOverlay> {
@@ -169,34 +166,39 @@ class _StartupLoadingOverlayState extends State<_StartupLoadingOverlay> {
   @override
   Widget build(BuildContext context) {
     final windowWidth = MediaQuery.sizeOf(context).width;
-    final panelWidth =
-        math.min(340.0, math.max(260.0, windowWidth - Spacing.xl * 2));
+    final panelWidth = math.min(
+      340.0,
+      math.max(260.0, windowWidth - Spacing.xl * 2),
+    );
 
     final configPhase = widget.message == I18n.homeLoadingConfigDetail;
     final deployStatus = widget.autoDeploying
         ? _StartupStepStatus.active
-        : (_sawAutoDeploy ? _StartupStepStatus.done : _StartupStepStatus.pending);
+        : (_sawAutoDeploy
+              ? _StartupStepStatus.done
+              : _StartupStepStatus.pending);
     final loginStatus = widget.autoDeploying
         ? _StartupStepStatus.pending
         : (configPhase ? _StartupStepStatus.done : _StartupStepStatus.active);
-    final configStatus =
-        configPhase ? _StartupStepStatus.active : _StartupStepStatus.pending;
+    final configStatus = configPhase
+        ? _StartupStepStatus.active
+        : _StartupStepStatus.pending;
 
     return Stack(
       fit: StackFit.expand,
       children: [
         // HomeBackdrop 在此层下方持续以 cover 绘制正面全幅背景，
         // 部署状态页沿用同一幅随窗口缩放的画面与轻微动态。
-        DecoratedBox(
+        const DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: const [
+              colors: [
                 Color(0xD607101C),
                 Color(0x9907101C),
                 Color(0x3307101C),
                 Color(0x0007101C),
               ],
-              stops: const [0, 0.35, 0.72, 1],
+              stops: [0, 0.35, 0.72, 1],
             ),
           ),
         ),
@@ -209,99 +211,126 @@ class _StartupLoadingOverlayState extends State<_StartupLoadingOverlay> {
                 vertical: Spacing.lg,
               ),
               child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: Motion.of(context, Motion.slow),
-        curve: Curves.easeOutCubic,
-        builder: (context, t, child) => Opacity(
-          opacity: t,
-          child: Transform.translate(
-            offset: Offset(-12 * (1 - t), 0),
-            child: child,
-          ),
-        ),
-        child: Container(
-            width: math.min(430, math.max(panelWidth, windowWidth * 0.32)),
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: const Color(0xEB111D2D),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0x555D829F)),
-              boxShadow: const [
-                BoxShadow(color: Color(0x77030911), blurRadius: 48, offset: Offset(0, 20)),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.auto_awesome_rounded,
-                        color: Color(0xFF76BDD8), size: 22),
-                    const SizedBox(width: 10),
-                    Text('OASX', style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFFE9F4F9), fontWeight: FontWeight.w700,
-                      letterSpacing: 2,
-                    )),
-                    const Spacer(),
-                    Text(I18n.homeStartupOverline.tr,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF9AB1C3), letterSpacing: 1,
-                        )),
-                  ],
-                ),
-                const SizedBox(height: 26),
-                Text(widget.message.tr,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: const Color(0xFFF2F7FA), fontWeight: FontWeight.w700,
-                    )),
-                const SizedBox(height: 8),
-                Text(
-                  '${I18n.homeStartupStepDeploy.tr} · '
-                  '${I18n.homeStartupStepLogin.tr} · '
-                  '${I18n.homeStartupStepConfig.tr}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF9AB1C3),
-                    )),
-                const SizedBox(height: 24),
-                const Divider(color: Color(0x445D829F), height: 1),
-                const SizedBox(height: 20),
-                _StartupStepRow(
-                  status: deployStatus,
-                  label: I18n.homeStartupStepDeploy.tr,
-                ),
-                const SizedBox(height: Spacing.sm),
-                _StartupStepRow(
-                  status: loginStatus,
-                  label: I18n.homeStartupStepLogin.tr,
-                ),
-                const SizedBox(height: Spacing.sm),
-                _StartupStepRow(
-                  status: configStatus,
-                  label: I18n.homeStartupStepConfig.tr,
-                ),
-                const SizedBox(height: 20),
-                LinearProgressIndicator(
-                  minHeight: 3,
-                  borderRadius: BorderRadius.circular(2),
-                  backgroundColor: const Color(0xFF263749),
-                  color: const Color(0xFF76BDD8),
-                ),
-                const _StartupLogTail(),
-                const SizedBox(height: 22),
-                OutlinedButton.icon(
-                  onPressed: () => Get.toNamed('/server'),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: Text(I18n.homeGoDeployPage.tr),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFB9DEF0),
-                    side: const BorderSide(color: Color(0x885D829F)),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                tween: Tween<double>(begin: 0, end: 1),
+                duration: Motion.of(context, Motion.slow),
+                curve: Curves.easeOutCubic,
+                builder: (context, t, child) => Opacity(
+                  opacity: t,
+                  child: Transform.translate(
+                    offset: Offset(-12 * (1 - t), 0),
+                    child: child,
                   ),
                 ),
-              ],
-            ),
-          ),
+                child: Container(
+                  width: math.min(
+                    430,
+                    math.max(panelWidth, windowWidth * 0.32),
+                  ),
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    color: const Color(0xEB111D2D),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0x555D829F)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x77030911),
+                        blurRadius: 48,
+                        offset: Offset(0, 20),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.auto_awesome_rounded,
+                            color: Color(0xFF76BDD8),
+                            size: 22,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'OASX',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: const Color(0xFFE9F4F9),
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 2,
+                                ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            I18n.homeStartupOverline.tr,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: const Color(0xFF9AB1C3),
+                                  letterSpacing: 1,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 26),
+                      Text(
+                        widget.message.tr,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: const Color(0xFFF2F7FA),
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${I18n.homeStartupStepDeploy.tr} · '
+                        '${I18n.homeStartupStepLogin.tr} · '
+                        '${I18n.homeStartupStepConfig.tr}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF9AB1C3),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(color: Color(0x445D829F), height: 1),
+                      const SizedBox(height: 20),
+                      _StartupStepRow(
+                        status: deployStatus,
+                        label: I18n.homeStartupStepDeploy.tr,
+                      ),
+                      const SizedBox(height: Spacing.sm),
+                      _StartupStepRow(
+                        status: loginStatus,
+                        label: I18n.homeStartupStepLogin.tr,
+                      ),
+                      const SizedBox(height: Spacing.sm),
+                      _StartupStepRow(
+                        status: configStatus,
+                        label: I18n.homeStartupStepConfig.tr,
+                      ),
+                      const SizedBox(height: 20),
+                      LinearProgressIndicator(
+                        minHeight: 3,
+                        borderRadius: BorderRadius.circular(2),
+                        backgroundColor: const Color(0xFF263749),
+                        color: const Color(0xFF76BDD8),
+                      ),
+                      const _StartupLogTail(),
+                      const SizedBox(height: 22),
+                      OutlinedButton.icon(
+                        onPressed: () => Get.toNamed('/server'),
+                        icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                        label: Text(I18n.homeGoDeployPage.tr),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFB9DEF0),
+                          side: const BorderSide(color: Color(0x885D829F)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -328,8 +357,11 @@ class _StartupStepRow extends StatelessWidget {
     final Widget icon;
     switch (status) {
       case _StartupStepStatus.done:
-        icon = const Icon(Icons.check_rounded,
-            size: 18, color: Color(0xFF7CC9A8));
+        icon = const Icon(
+          Icons.check_rounded,
+          size: 18,
+          color: Color(0xFF7CC9A8),
+        );
       case _StartupStepStatus.active:
         icon = const SizedBox(
           width: 14,
@@ -340,26 +372,27 @@ class _StartupStepRow extends StatelessWidget {
           ),
         );
       case _StartupStepStatus.pending:
-        icon = const Icon(Icons.radio_button_unchecked,
-            size: 16, color: Color(0xFF718A9F));
+        icon = const Icon(
+          Icons.radio_button_unchecked,
+          size: 16,
+          color: Color(0xFF718A9F),
+        );
     }
     final TextStyle? labelStyle;
     switch (status) {
       case _StartupStepStatus.active:
-        labelStyle = Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(color: const Color(0xFFF2F7FA), fontWeight: FontWeight.w600);
+        labelStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: const Color(0xFFF2F7FA),
+          fontWeight: FontWeight.w600,
+        );
       case _StartupStepStatus.done:
-        labelStyle = Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(color: const Color(0xFFCADBE4));
+        labelStyle = Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFCADBE4));
       case _StartupStepStatus.pending:
-        labelStyle = Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(color: const Color(0xFF8EA5B8));
+        labelStyle = Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF8EA5B8));
     }
     return Row(
       children: [
@@ -397,15 +430,14 @@ class _StartupLogTail extends StatelessWidget {
           const SizedBox(height: Spacing.lg),
           Text(
             I18n.homeStartupLogTitle.tr,
-            style: TypeScale.caption(context)?.copyWith(
-              color: const Color(0xFF9AB1C3),
-              letterSpacing: 1,
-            ),
+            style: TypeScale.caption(
+              context,
+            )?.copyWith(color: const Color(0xFF9AB1C3), letterSpacing: 1),
           ),
           const SizedBox(height: Spacing.xs),
           Container(
             padding: const EdgeInsets.only(left: Spacing.smPlus),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(
                 left: BorderSide(color: Color(0x885D829F), width: 2),
               ),
@@ -419,12 +451,12 @@ class _StartupLogTail extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFFB3C5D2),
-                          height: 1.5,
-                          fontFeatures: const <FontFeature>[
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
+                      color: const Color(0xFFB3C5D2),
+                      height: 1.5,
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
                   ),
               ],
             ),

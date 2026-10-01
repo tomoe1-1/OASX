@@ -110,9 +110,9 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
     if (!mounted) return;
     setState(() => _updatingCapability = false);
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('游戏证据授权未能保存，请检查 OAS 服务')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('游戏证据授权未能保存，请检查 OAS 服务')));
     }
   }
 
@@ -126,13 +126,12 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        // 半透明：主界面有 HomeBackdrop 垫底，面板透出的是氛围立绘
-        // 而不是纯色。详见 home_backdrop.dart 的透明度说明。
-        color: homePanelColor(context),
+    return Material(
+      // Paint the translucent panel and its ListTile ink on one surface.
+      color: homePanelColor(context),
+      shape: RoundedRectangleBorder(
         borderRadius: Radii.cardRadius,
-        border: Border.all(color: Surfaces.divider(context)),
+        side: BorderSide(color: Surfaces.divider(context)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(Spacing.md),
@@ -204,7 +203,9 @@ class _ConfigCollectionPanelState extends State<ConfigCollectionPanel> {
                   title: const Text('允许发送游戏证据给 Codex'),
                   subtitle: const Text('发送遮盖常见账号区域的截图及 OCR 文字，用于修复与活动草稿'),
                   value: _shareGameEvidence,
-                  onChanged: _updatingCapability ? null : _setGameEvidenceEnabled,
+                  onChanged: _updatingCapability
+                      ? null
+                      : _setGameEvidenceEnabled,
                 ),
               ],
             ],

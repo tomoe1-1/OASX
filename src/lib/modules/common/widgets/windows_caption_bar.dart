@@ -81,16 +81,16 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const foreground = Color(0xFFE4F1F7);
+    const foreground = Color(0xFF10222C);
     final captionTheme = theme.copyWith(
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       colorScheme: theme.colorScheme.copyWith(
-        brightness: Brightness.dark,
-        primary: const Color(0xFF9BDCEF),
-        surface: const Color(0xFF142A3A),
+        brightness: Brightness.light,
+        primary: const Color(0xFF143F53),
+        surface: Colors.white,
         onSurface: foreground,
-        onSurfaceVariant: const Color(0xFFBCD0DD),
-        outline: const Color(0xFF7594A8),
+        onSurfaceVariant: const Color(0xFF152A36),
+        outline: const Color(0xFF4F6A7A),
       ),
       textTheme: theme.textTheme.apply(
         bodyColor: foreground,
@@ -102,74 +102,74 @@ class _WindowsCaptionBarState extends State<WindowsCaptionBar>
           foregroundColor: const WidgetStatePropertyAll(foreground),
         ),
       ),
-      hoverColor: const Color(0x185CCAE3),
-      splashColor: const Color(0x205CCAE3),
+      hoverColor: const Color(0x14102A3A),
+      splashColor: const Color(0x20102A3A),
     );
-    // Keep the caption dark in both app themes so its controls remain readable
-    // against the blue background. The page below retains its own theme.
+    // The frame lets the home's one backdrop show through. Its light local
+    // theme gives controls a dark foreground without changing the page theme.
     return Theme(
       data: captionTheme,
-      child: Container(
-        height: widget.preferredSize.height,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xFF142A3A), Color(0xFF102030), Color(0xFF0D1928)],
-            stops: [0, 0.58, 1],
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Container(
+          height: widget.preferredSize.height - 8,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.32),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.44)),
           ),
-          border: Border(bottom: BorderSide(color: Color(0x705CCAE3))),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: Spacing.lg),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final hideTrailingActions = _shouldHideTrailingActions(
-                      constraints.maxWidth,
-                    );
-                    return Row(
-                      children: [
-                        if (widget.onMenuPressed != null)
-                          IconButton(
-                            icon: const Icon(Icons.menu),
-                            tooltip: I18n.more.tr,
-                            onPressed: widget.onMenuPressed,
-                            visualDensity: VisualDensity.compact,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 40,
-                              height: 40,
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: Spacing.sm),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final hideTrailingActions = _shouldHideTrailingActions(
+                        constraints.maxWidth,
+                      );
+                      return Row(
+                        children: [
+                          if (widget.onMenuPressed != null)
+                            IconButton(
+                              icon: const Icon(Icons.menu),
+                              tooltip: I18n.more.tr,
+                              onPressed: widget.onMenuPressed,
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints.tightFor(
+                                width: 40,
+                                height: 40,
+                              ),
                             ),
-                          ),
-                        Expanded(
-                          child: DragToMoveArea(
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: getTitle(
-                                context,
-                                routePath: widget.routePath,
+                          Expanded(
+                            child: DragToMoveArea(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: getTitle(
+                                  context,
+                                  routePath: widget.routePath,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        if (!hideTrailingActions &&
-                            widget.trailingActions.isNotEmpty)
+                          if (!hideTrailingActions &&
+                              widget.trailingActions.isNotEmpty)
+                            const SizedBox(width: Spacing.sm),
+                          if (!hideTrailingActions) ...widget.trailingActions,
                           const SizedBox(width: Spacing.sm),
-                        if (!hideTrailingActions) ...widget.trailingActions,
-                        const SizedBox(width: Spacing.sm),
-                      ],
-                    );
-                  },
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            _WindowCaptionButtons(
-              brightness: Brightness.dark,
-              isMaximized: _isMaximized,
-            ),
-          ],
+              _WindowCaptionButtons(
+                brightness: Brightness.light,
+                isMaximized: _isMaximized,
+              ),
+            ],
+          ),
         ),
       ),
     );

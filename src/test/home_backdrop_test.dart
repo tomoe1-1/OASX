@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +13,129 @@ import 'package:oasx/modules/home/widgets/home_backdrop.dart';
 /// 测试环境不允许跑 `flutter test`（沙箱禁止 Dart 创建子进程），
 /// 这些断言与 `tools/render_home_backdrop.py` 里的复核脚本一一对应。
 void main() {
+  group('whole home window background', () {
+    testWidgets(
+      'one clipped backdrop covers caption and transparent scaffold',
+      (tester) async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMessageHandler('flutter/assets', (_) async => null);
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMessageHandler('flutter/assets', null);
+        });
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: HomeBackdropScaffold(
+              appBar: PreferredSize(
+                preferredSize: Size.fromHeight(50),
+                child: Text('caption'),
+              ),
+              body: Text('body'),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final backdrop = find.byType(HomeBackdrop);
+        expect(backdrop, findsOneWidget);
+        expect(
+          find.descendant(of: backdrop, matching: find.text('caption')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: backdrop, matching: find.text('body')),
+          findsOneWidget,
+        );
+        expect(
+          tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+          Colors.transparent,
+        );
+        final paint = find.descendant(
+          of: backdrop,
+          matching: find.byType(CustomPaint),
+        );
+        expect(
+          paint,
+          findsOneWidget,
+          reason: 'even unavailable artwork keeps an opaque painted fallback',
+        );
+        expect(
+          find.ancestor(of: paint, matching: find.byType(ClipRect)),
+          findsOneWidget,
+        );
+        expect(tester.getSize(paint), tester.getSize(backdrop));
+      },
+    );
+
+    testWidgets('wide narrow wide resizing retains the one background state', (
+      tester,
+    ) async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMessageHandler('flutter/assets', (_) async => null);
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMessageHandler('flutter/assets', null);
+      });
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1440, 900);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: HomeBackdropScaffold(body: Text('stable body')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final initialState = tester.state(find.byType(HomeBackdrop));
+      for (final size in [
+        const Size(380, 600),
+        const Size(900, 720),
+        const Size(1440, 900),
+      ]) {
+        tester.view.physicalSize = size;
+        await tester.pump();
+        expect(find.byType(HomeBackdrop), findsOneWidget);
+        expect(tester.state(find.byType(HomeBackdrop)), same(initialState));
+        expect(tester.getSize(find.byType(HomeBackdrop)), size);
+        expect(find.text('stable body'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+    });
+
+    testWidgets('lighter panel layers retain a readable log text surface', (
+      tester,
+    ) async {
+      late Color main;
+      late Color side;
+      late Color card;
+      late Color text;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light),
+          home: Builder(
+            builder: (context) {
+              main = homePanelColor(context);
+              side = homeSidebarPanelColor(context);
+              card = homeSidebarCardColor(context);
+              text = Theme.of(context).colorScheme.onSurface;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      expect(main.a, closeTo(.50, .01));
+      expect(side.a, closeTo(.38, .01));
+      expect(card.a, closeTo(.44, .01));
+      final logSurface = Color.alphaBlend(
+        card,
+        Color.alphaBlend(side, const Color(0xFF0D1015)),
+      );
+      final contrast =
+          (logSurface.computeLuminance() + .05) /
+          (text.computeLuminance() + .05);
+      expect(contrast, greaterThan(4.5));
+    });
+  });
+
   group('底衬构图常量', () {
     test('画布高度比例落在实测达标区间', () {
       // 第二版素材是头肩特写全高人像：1.1 = 顶部出血 10%、底边贴窗口
@@ -88,9 +210,13 @@ void main() {
     // 右半部被整体擦除 —— 而立绘恰恰锚在右缘舞台上。
     test('渐变起点必须比终点更透明（左擦右留）', () {
       final colors = backdropFadeLeftColors();
-      expect(colors.start.a, lessThan(colors.end.a),
-          reason: 'dstIn 下透明端会被擦除：起点（窗口左缘）必须透明、'
-              '终点（舞台方向）必须不透明，反了立绘整块消失');
+      expect(
+        colors.start.a,
+        lessThan(colors.end.a),
+        reason:
+            'dstIn 下透明端会被擦除：起点（窗口左缘）必须透明、'
+            '终点（舞台方向）必须不透明，反了立绘整块消失',
+      );
     });
 
     test('两端分别是全透与全不透，不做半途渐隐的模糊地带', () {
@@ -112,18 +238,16 @@ void main() {
       // 不提供任何资源，模拟 manifest 里没有这张图。
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMessageHandler(
-        'flutter/assets',
-        (ByteData? message) async => null,
-      );
+            'flutter/assets',
+            (ByteData? message) async => null,
+          );
       addTearDown(() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMessageHandler('flutter/assets', null);
       });
 
       await tester.pumpWidget(
-        const MaterialApp(
-          home: HomeBackdrop(child: Text('内容仍在')),
-        ),
+        const MaterialApp(home: HomeBackdrop(child: Text('内容仍在'))),
       );
       // 让 _load() 的 Future 跑完（它会失败）。
       await tester.pumpAndSettle();
@@ -132,10 +256,15 @@ void main() {
       expect(find.text('内容仍在'), findsOneWidget);
 
       // 但失败被记录下来了 —— 这是本次修复的核心
-      final state = tester.state<State<HomeBackdrop>>(find.byType(HomeBackdrop));
+      final state = tester.state<State<HomeBackdrop>>(
+        find.byType(HomeBackdrop),
+      );
       // ignore: avoid_dynamic_calls
-      expect((state as dynamic).isDegraded, isTrue,
-          reason: '资源加载失败必须留下可观测的痕迹，不能静默吞掉');
+      expect(
+        (state as dynamic).isDegraded,
+        isTrue,
+        reason: '资源加载失败必须留下可观测的痕迹，不能静默吞掉',
+      );
     });
   });
 
@@ -149,70 +278,83 @@ void main() {
     Future<void> mockAssets(Map<String, List<int>> assets) async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMessageHandler('flutter/assets', (ByteData? message) async {
-        // message 是 UTF-8 编码的 asset key
-        final data = message!.buffer.asUint8List();
-        final keyStr = String.fromCharCodes(data);
-        final bytes = assets[keyStr];
-        if (bytes == null) {
-          return null;
-        }
-        return ByteData.view(Uint8List.fromList(bytes).buffer);
-      });
+            // message 是 UTF-8 编码的 asset key
+            final data = message!.buffer.asUint8List();
+            final keyStr = String.fromCharCodes(data);
+            final bytes = assets[keyStr];
+            if (bytes == null) {
+              return null;
+            }
+            return ByteData.view(Uint8List.fromList(bytes).buffer);
+          });
     }
 
     testWidgets('动画缺失但静态可用 → 显示静态，不降级', (tester) async {
-      final jpgBytes =
-          File('assets/images/main_bg_muse.jpg').readAsBytesSync();
-      await mockAssets({
-        'assets/images/main_bg_muse.jpg': jpgBytes,
-      });
+      final jpgBytes = File('assets/images/main_bg_muse.jpg').readAsBytesSync();
+      await mockAssets({'assets/images/main_bg_muse.jpg': jpgBytes});
       addTearDown(() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMessageHandler('flutter/assets', null);
       });
 
       await tester.pumpWidget(
-        const MaterialApp(
-          home: HomeBackdrop(child: Text('内容仍在')),
-        ),
+        const MaterialApp(home: HomeBackdrop(child: Text('内容仍在'))),
       );
       await tester.pumpAndSettle();
 
-      final state = tester.state<State<HomeBackdrop>>(find.byType(HomeBackdrop));
+      final state = tester.state<State<HomeBackdrop>>(
+        find.byType(HomeBackdrop),
+      );
       // ignore: avoid_dynamic_calls
-      expect((state as dynamic).isDegraded, isFalse,
-          reason: '静态可用时不应降级为纯表面色');
+      expect((state as dynamic).isDegraded, isFalse, reason: '静态可用时不应降级为纯表面色');
       // ignore: avoid_dynamic_calls
-      expect((state as dynamic).isAnimated, isFalse,
-          reason: '动画缺失时应回退为静态而不是降级');
-      expect(find.byType(CustomPaint), findsOneWidget);
+      expect(
+        (state as dynamic).isAnimated,
+        isFalse,
+        reason: '动画缺失时应回退为静态而不是降级',
+      );
+      expect(
+        find.descendant(
+          of: find.byType(HomeBackdrop),
+          matching: find.byType(CustomPaint),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('动画资源可用 → isAnimated 为 true 且逐帧推进', (tester) async {
-      final webpBytes =
-          File('assets/images/main_bg_muse_anim.webp').readAsBytesSync();
-      await mockAssets({
-        'assets/images/main_bg_muse_anim.webp': webpBytes,
-      });
+      final webpBytes = File(
+        'assets/images/main_bg_muse_anim.webp',
+      ).readAsBytesSync();
+      await mockAssets({'assets/images/main_bg_muse_anim.webp': webpBytes});
       addTearDown(() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMessageHandler('flutter/assets', null);
       });
 
       await tester.pumpWidget(
-        const MaterialApp(
-          home: HomeBackdrop(child: Text('内容仍在')),
-        ),
+        const MaterialApp(home: HomeBackdrop(child: Text('内容仍在'))),
       );
       // 动画是无限循环，**不能** pumpAndSettle（永远停不下来会超时）。
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      final state = tester.state<State<HomeBackdrop>>(find.byType(HomeBackdrop));
+      final state = tester.state<State<HomeBackdrop>>(
+        find.byType(HomeBackdrop),
+      );
       // ignore: avoid_dynamic_calls
-      expect((state as dynamic).isAnimated, isTrue,
-          reason: '动画资源可用时必须真的在播逐帧动画');
-      expect(find.byType(CustomPaint), findsOneWidget);
+      expect(
+        (state as dynamic).isAnimated,
+        isTrue,
+        reason: '动画资源可用时必须真的在播逐帧动画',
+      );
+      expect(
+        find.descendant(
+          of: find.byType(HomeBackdrop),
+          matching: find.byType(CustomPaint),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

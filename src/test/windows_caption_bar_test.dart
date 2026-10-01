@@ -77,16 +77,16 @@ void main() {
       final title = captionTitle();
       expect(title, findsOneWidget);
       final captionTheme = Theme.of(tester.element(title));
-      expect(captionTheme.brightness, Brightness.dark);
+      expect(captionTheme.brightness, Brightness.light);
       expect(
         captionTheme.colorScheme.primary.computeLuminance(),
-        greaterThan(.5),
+        lessThan(.10),
       );
       expect(
         captionTheme.iconButtonTheme.style?.foregroundColor
             ?.resolve({})
             ?.computeLuminance(),
-        greaterThan(.5),
+        lessThan(.10),
       );
       expect(
         Theme.of(
@@ -97,10 +97,27 @@ void main() {
       for (final button in tester.widgetList<WindowCaptionButton>(
         find.byType(WindowCaptionButton),
       )) {
-        expect(button.brightness, Brightness.dark);
+        expect(button.brightness, Brightness.light);
       }
       expect(tester.getSize(find.byType(WindowsCaptionBar)).height, 50);
       expect(find.byType(Image), findsOneWidget);
+      final frame = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(WindowsCaptionBar),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Container &&
+                    widget.decoration is BoxDecoration &&
+                    (widget.decoration! as BoxDecoration).borderRadius != null,
+              ),
+            )
+            .first,
+      );
+      final decoration = frame.decoration! as BoxDecoration;
+      expect(decoration.color?.a, inInclusiveRange(.25, .35));
+      expect(decoration.gradient, isNull);
+      expect(frame.clipBehavior, Clip.antiAlias);
       expect(tester.takeException(), isNull);
     });
   }

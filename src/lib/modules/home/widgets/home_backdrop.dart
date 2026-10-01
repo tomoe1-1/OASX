@@ -7,51 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 
-/// 主界面底衬：优先绘制正面人物的全幅星空背景，以缓慢漂移保持动态；
-/// 宽画幅资源不可用时，回退到旧的右缘立绘逐帧动画与静态图。
-/// 下列舞台几何参数只用于旧素材回退路径。
-///
-/// ## 可见性从哪来（第二版构图）
-///
-/// 主界面内容区是不透明度 86% 的面板拼出来的 —— 立绘透过面板最多
-/// 只剩 14%，光靠「透」永远看不清人物（第一版把素材压暗迁就对比度，
-/// 结果就是用户看到的「黑块」）。
-///
-/// 所以第二版把可见性拆成两层：
-///
-/// 1. **舞台**：详情面板右缘收进一条 [backdropStageWidth] 宽的
-///    无面板区，立绘的脸完整落在里面、以全亮度显示 —— 人物一眼可辨；
-/// 2. **氛围**：身体其余部分透过面板（14%）垫在界面下面，
-///    配合素材内的水平渐变压暗，既给深色界面提供「有内容的底」，
-///    又不伤任何文字的对比度。
-///
-/// ## 动画来源
-///
-/// 动画不是生成的粒子特效，而是**参考视频本身**：取「已渲染段」
-/// （发丝飘动 + 眨眼）逐帧处理成动画 WebP。生成、防闪烁增益、
-/// 逐帧可读性验收都固化在 `tools/build_home_backdrop_anim.py`。
-/// 加载失败或资源缺失时回退静态 jpg，再失败才降级为纯表面色
-/// （`isDegraded` 可观测）。
-///
-/// 系统开启「减少动态效果」时只解码首帧、不做帧推进 —— 内容不变，
-/// 只去掉运动。
-///
-/// ## 构图规则
-///
-/// 立绘裁自参考视频，是一块**竖构图头肩特写**（脸中心约在素材
-/// x=0.50、y=0.40，见验收预览）。直接用 cover 铺满会把脸放大到糊，
-/// 因此按「固定视觉高度」放置，而不是按窗口比例拉伸：
-///
-/// - 画布高度锚定 `窗口高 × [_kHeightRatio]`（上下自然出血裁切）
-/// - 水平锚点 = 右缘舞台中心（[backdropAnchorFromRight]，脸对准舞台）
-/// - 超出窗口的部分自然裁掉，不会挤压主体
-///
-/// ## 透明度与可读性
-///
-/// 立绘用 [_kOpacity] 叠加 —— 素材的青色是**装饰**，不能盖过状态色
-/// （`.impeccable.md`：强调色占比 < 10%）。可读性由三层保障：
-/// 舞台把脸挪出文字区（[backdropStageWidth]）、半透明面板
-/// （[homePanelColor]）、逐帧真实几何验收（`tools/measure_real_geometry.py`）。
+/// 主界面底衬：正面人物与星空随整个软件窗口缓慢漂移、等比铺满。
+/// [HomeBackdropScaffold] 让标题栏和正文透出同一幅画面及同一个动画。
+/// 绘制出血明确裁在软件区域内；缺失资源时保留深色底，不露出桌面。
+/// 宽画幅不可用时回退到旧的立绘动画、静态图；下列舞台参数仅用于回退。
+/// 系统开启「减少动态效果」时保留首帧并停止推进。
 class HomeBackdrop extends StatefulWidget {
   const HomeBackdrop({super.key, this.child});
 
@@ -60,6 +20,23 @@ class HomeBackdrop extends StatefulWidget {
 
   @override
   State<HomeBackdrop> createState() => _HomeBackdropState();
+}
+
+/// One continuous background for the entire home window, including its caption.
+class HomeBackdropScaffold extends StatelessWidget {
+  const HomeBackdropScaffold({super.key, this.appBar, required this.body});
+
+  final PreferredSizeWidget? appBar;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) => HomeBackdrop(
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: appBar,
+      body: body,
+    ),
+  );
 }
 
 /// 立绘资源逻辑尺寸。
@@ -463,19 +440,20 @@ class _HomeBackdropState extends State<HomeBackdrop> {
     final art = _art;
     final ambient = _ambient;
     final fullArt = _fullArt;
-    if (art == null && ambient == null && fullArt == null) {
-      return widget.child ?? const SizedBox.expand();
-    }
     return Stack(
       fit: StackFit.expand,
       children: [
-        RepaintBoundary(
-          child: CustomPaint(
-            painter: _BackdropPainter(
-              image: art,
-              ambient: ambient,
-              fullImage: fullArt,
-              motionPhase: _motionPhase,
+        // The artwork deliberately overscans; clip only its paint so it cannot
+        // leave a stale strip outside the software's drawing area after resize.
+        ClipRect(
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: _BackdropPainter(
+                image: art,
+                ambient: ambient,
+                fullImage: fullArt,
+                motionPhase: _motionPhase,
+              ),
             ),
           ),
         ),
@@ -566,7 +544,7 @@ class _BackdropPainter extends CustomPainter {
         ),
         Paint()
           ..filterQuality = FilterQuality.medium
-          ..color = Color.fromRGBO(255, 255, 255, _kAmbientOpacity),
+          ..color = const Color.fromRGBO(255, 255, 255, _kAmbientOpacity),
       );
     }
 
@@ -599,7 +577,7 @@ class _BackdropPainter extends CustomPainter {
       rect,
       Paint()
         ..filterQuality = FilterQuality.medium
-        ..color = Color.fromRGBO(255, 255, 255, _kOpacity),
+        ..color = const Color.fromRGBO(255, 255, 255, _kOpacity),
     );
 
     // 左淡出、右保留。dstIn = dst × src.a，因此**透明端在起点**
@@ -662,18 +640,18 @@ class _BackdropPainter extends CustomPainter {
 /// 面板内部的任务行不跟着改 —— 它们本来就是 `Colors.transparent`
 /// （只有选中态叠一层 `primaryContainer @ 28%`），会自然透出面板底色。
 Color homePanelColor(BuildContext context) {
-  final alpha = Theme.of(context).brightness == Brightness.dark ? 0.78 : 0.68;
+  final alpha = Theme.of(context).brightness == Brightness.dark ? 0.64 : 0.50;
   return Surfaces.panel(context).withValues(alpha: alpha);
 }
 
 /// 右侧工作台需要再透出一层背景，内部卡片仍保留文字底色。
 Color homeSidebarPanelColor(BuildContext context) {
-  final alpha = Theme.of(context).brightness == Brightness.dark ? 0.70 : 0.52;
+  final alpha = Theme.of(context).brightness == Brightness.dark ? 0.50 : 0.38;
   return Surfaces.panel(context).withValues(alpha: alpha);
 }
 
 Color homeSidebarCardColor(BuildContext context) {
-  final alpha = Theme.of(context).brightness == Brightness.dark ? 0.78 : 0.62;
+  final alpha = Theme.of(context).brightness == Brightness.dark ? 0.58 : 0.44;
   return Surfaces.card(context).withValues(alpha: alpha);
 }
 

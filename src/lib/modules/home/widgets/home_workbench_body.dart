@@ -25,7 +25,8 @@ class HomeWorkbenchBody extends StatefulWidget {
   final Widget Function(
     HomeWorkbenchLayoutMode layoutMode,
     VoidCallback? onExpandRightSidebar,
-  ) detailsBuilder;
+  )
+  detailsBuilder;
 
   /// Right sidebar widget reused in three-pane mode.
   final Widget sidebar;
@@ -46,6 +47,9 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
 
   /// Tracks whether the left divider is actively dragging.
   bool _isDraggingLeftDivider = false;
+
+  /// Constraints used by the previous layout pass, including window height.
+  BoxConstraints? _lastConstraints;
 
   /// Remembers the latest width resolved by the current layout pass.
   double? _lastResolvedWidth;
@@ -82,6 +86,13 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
       final persistedSplitRatio = widget.controller.workbenchSplitRatio.value;
       return LayoutBuilder(
         builder: (context, constraints) {
+          if (_lastConstraints != null && _lastConstraints != constraints) {
+            // Native window resizing can remove the active divider before its
+            // recognizer delivers drag-end. Discard that unfinished preview
+            // before resolving the new panes; keep the persisted dimensions.
+            _clearDividerDragState();
+          }
+          _lastConstraints = constraints;
           // 右缘立绘舞台：底衬的少女脸落在这条无面板区里全亮显示。
           // 舞台宽度由 [backdropStageWidth] 统一给出 —— 这里的
           // `constraints.maxWidth` 就是它要求的「工作台内容宽」，
@@ -104,7 +115,8 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
           final layoutMode = layout.mode;
           widget.controller.setWorkbenchLayoutMode(layoutMode);
           final collection = widget.collectionBuilder(layoutMode);
-          final canExpandRightSidebar = _forceTwoPane &&
+          final canExpandRightSidebar =
+              _forceTwoPane &&
               unrestrictedLayout.mode == HomeWorkbenchLayoutMode.threePane;
           final details = _buildPaneFrame(
             child: widget.detailsBuilder(
@@ -124,7 +136,8 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
             );
           }
           return Obx(() {
-            final showWorkspace = widget.controller.workbenchPage.value ==
+            final showWorkspace =
+                widget.controller.workbenchPage.value ==
                     HomeWorkbenchPage.workspace &&
                 widget.controller.activeScriptName.value.trim().isNotEmpty;
             return showWorkspace ? details : collection;
@@ -156,6 +169,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
           onDragStart: () => _handleLeftDragStart(layout),
           onDragUpdate: (details) => _handleLeftDragUpdate(details, layout),
           onDragEnd: _handleLeftDragEnd,
+          onDragCancel: _handleDividerDragCancel,
           collapseSide: null,
           collapseProgress: 0,
         ),
@@ -166,6 +180,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
             onDragStart: () => _handleRightDragStart(layout),
             onDragUpdate: (details) => _handleRightDragUpdate(details, layout),
             onDragEnd: _handleRightDragEnd,
+            onDragCancel: _handleDividerDragCancel,
             collapseSide: _pendingCollapseSide,
             collapseProgress: _pendingCollapseProgress,
           ),
@@ -209,7 +224,8 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
 
   /// Schedules three-pane restoration once the layout becomes legal again.
   void _scheduleThreePaneRestoreIfNeeded(
-      HomeWorkbenchLayoutMode unrestrictedMode) {
+    HomeWorkbenchLayoutMode unrestrictedMode,
+  ) {
     if (!_forceTwoPane ||
         _isDraggingLeftDivider ||
         !_hasRestoreTriggerChanged() ||
@@ -258,7 +274,12 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
 
   /// Updates the live collection width while keeping at least a two-pane desktop.
   void _handleLeftDragUpdate(
-      DragUpdateDetails details, HomeWorkbenchLayout layout) {
+    DragUpdateDetails details,
+    HomeWorkbenchLayout layout,
+  ) {
+    if (!_isDraggingLeftDivider) {
+      return;
+    }
     final currentTargetWidth =
         _dragTargetCollectionWidth ?? layout.collectionWidth;
     final nextTargetWidth = currentTargetWidth + details.delta.dx;
@@ -274,7 +295,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
 
   /// Persists the last valid collection width after dragging the left divider.
   void _handleLeftDragEnd(DragEndDetails details) {
-    if (!mounted) {
+    if (!mounted || !_isDraggingLeftDivider) {
       return;
     }
     final dragCollectionWidth = _dragCollectionWidth;
@@ -299,7 +320,12 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
 
   /// Updates the live split ratio while exposing a buffered collapse state.
   void _handleRightDragUpdate(
-      DragUpdateDetails details, HomeWorkbenchLayout layout) {
+    DragUpdateDetails details,
+    HomeWorkbenchLayout layout,
+  ) {
+    if (_dragSplitRatio == null) {
+      return;
+    }
     final currentTargetWidth = _dragTargetDetailsWidth ?? layout.detailsWidth;
     final nextTargetWidth = currentTargetWidth + details.delta.dx;
     final dragState = resolveHomeWorkbenchDragState(
@@ -318,7 +344,7 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
 
   /// Persists the last valid split or commits a buffered collapse on release.
   void _handleRightDragEnd(DragEndDetails details) {
-    if (!mounted) {
+    if (!mounted || _dragSplitRatio == null) {
       return;
     }
     final dragSplitRatio = _dragSplitRatio;
@@ -332,22 +358,44 @@ class _HomeWorkbenchBodyState extends State<HomeWorkbenchBody> {
           widget.controller.displayedWorkbenchSidebarTabFor(
             HomeWorkbenchLayoutMode.threePane,
           ),
-        HomeWorkbenchCollapseSide.logs => widget.controller
-            .displayedWorkbenchTabFor(HomeWorkbenchLayoutMode.threePane),
+        HomeWorkbenchCollapseSide.logs =>
+          widget.controller.displayedWorkbenchTabFor(
+            HomeWorkbenchLayoutMode.threePane,
+          ),
       };
       widget.controller.setActiveWorkbenchTabValue(preservedTab);
     }
     setState(() {
       _forceTwoPane = _collapseOnRelease;
       _forcedTwoPaneWidth = _collapseOnRelease ? _lastResolvedWidth : null;
-      _forcedTwoPaneCollectionWidth =
-          _collapseOnRelease ? _lastResolvedCollectionWidth : null;
+      _forcedTwoPaneCollectionWidth = _collapseOnRelease
+          ? _lastResolvedCollectionWidth
+          : null;
       _dragSplitRatio = null;
       _dragTargetDetailsWidth = null;
       _pendingCollapseSide = null;
       _pendingCollapseProgress = 0;
       _collapseOnRelease = false;
     });
+  }
+
+  /// Clears transient divider previews without changing stored pane sizes.
+  void _clearDividerDragState() {
+    _isDraggingLeftDivider = false;
+    _dragCollectionWidth = null;
+    _dragTargetCollectionWidth = null;
+    _dragSplitRatio = null;
+    _dragTargetDetailsWidth = null;
+    _pendingCollapseSide = null;
+    _pendingCollapseProgress = 0;
+    _collapseOnRelease = false;
+  }
+
+  void _handleDividerDragCancel() {
+    if (!mounted) {
+      return;
+    }
+    setState(_clearDividerDragState);
   }
 
   /// Restores the desktop right sidebar without changing window width.
@@ -394,6 +442,7 @@ class _WorkbenchDivider extends StatelessWidget {
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
+    required this.onDragCancel,
     required this.collapseSide,
     required this.collapseProgress,
   });
@@ -406,6 +455,9 @@ class _WorkbenchDivider extends StatelessWidget {
 
   /// Callback fired when the drag gesture ends.
   final ValueChanged<DragEndDetails> onDragEnd;
+
+  /// Callback fired if the recognizer cancels before completing a drag.
+  final VoidCallback onDragCancel;
 
   /// Side currently highlighted as the pending collapse target.
   final HomeWorkbenchCollapseSide? collapseSide;
@@ -424,8 +476,9 @@ class _WorkbenchDivider extends StatelessWidget {
     // 问题是色块的面积和「谁要被折叠」这件事没有对应关系 —— 用户看到
     // 的是一团彩色，而不是一个会执行的动作。改成贴着目标侧画一根 2px
     // 竖杆：面积足够小，位置本身就是信息（左杆 = 折叠左面板）。
-    final highlightColor =
-        scheme.primary.withValues(alpha: 0.55 + collapseProgress * 0.45);
+    final highlightColor = scheme.primary.withValues(
+      alpha: 0.55 + collapseProgress * 0.45,
+    );
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
       child: GestureDetector(
@@ -433,6 +486,7 @@ class _WorkbenchDivider extends StatelessWidget {
         onHorizontalDragStart: (_) => onDragStart(),
         onHorizontalDragUpdate: onDragUpdate,
         onHorizontalDragEnd: onDragEnd,
+        onHorizontalDragCancel: onDragCancel,
         child: SizedBox(
           width: kHomeWorkbenchDividerWidth,
           child: Stack(

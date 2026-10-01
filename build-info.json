@@ -1,14 +1,16 @@
 {
-  "version": "2.0.2",
-  "build": 22,
-  "revision": "window-resize-caption-20261001",
+  "version": "2.0.3",
+  "build": 23,
+  "revision": "home-backdrop-divider-recovery-20261001",
   "flutter": "3.47.5",
   "dart": "3.13.4",
-  "testsPassed": 108,
+  "testsPassed": 116,
   "nativeResizeScenariosPassed": 3,
   "nativeEdgeResizesChecked": 32,
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
   "defaultOasBranch": "self",
-  "appSoSha256": "9722041ED913CB66ECA204BE7390E6237846867280D1E6E764B4E38AF29835BB",
-  "exeSha256": "639371B0E47E6E36B41AAB1D2C760F79C4964A09AA3BA7F9D75D4108194A30E8"
+  "appSoSha256": "12AD46538704334255A3944989C13C26F4F99815852D94BCD3D203C648A752AC",
+  "exeSha256": "86030CB54736801915A2FA63A3A7BA219CFA308B2104E6C3C72A3446545E5A42",
+  "workbenchResizeScenariosPassed": 5,
+  "workbenchBreakpointTransitionsChecked": 45
 }
