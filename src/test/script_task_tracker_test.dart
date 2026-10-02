@@ -8,6 +8,38 @@ import 'package:oasx/service/script_task_tracker.dart';
 import 'package:oasx/service/websocket_service.dart';
 
 void main() {
+  test('failed queue is independent and incomplete logs do not promote retries', () {
+    final tracker = ScriptTaskTracker()..setRunning(true);
+    tracker.updateSchedule(
+      candidate: const ScheduledScriptTask('Orochi', '2026-10-02 14:00:00'),
+      pending: const [ScheduledScriptTask('Duel', '')],
+      waiting: const [],
+      failed: const [ScheduledScriptTask('Orochi', '2026-10-02 14:00:00')],
+    );
+    tracker.consumeLog('Scheduler: task `Orochi` incomplete; progress retained');
+    expect(tracker.pending.map((task) => task.name), ['Duel']);
+    expect(tracker.failed.single.nextRun, '2026-10-02 14:00:00');
+  });
+
+  test('websocket publishes failures and clears them on a successful snapshot', () {
+    Get.testMode = true;
+    Get.put(WebSocketService());
+    addTearDown(Get.reset);
+    final service = ScriptService(storage: _UnusedStorage());
+    service.addScriptModel('tomoe');
+    service.wsListener(jsonEncode({'schedule': {
+      'running': {}, 'pending': [{'name': 'Duel', 'next_run': ''}],
+      'waiting': [], 'failed': [{'name': 'Orochi', 'next_run': '2026-10-02 14:00:00'}],
+    }}), 'tomoe');
+    final model = service.findScriptModel('tomoe')!;
+    expect(model.failedTaskList.single.taskName.value, 'Orochi');
+    expect(model.pendingTaskList.single.taskName.value, 'Duel');
+    service.wsListener(jsonEncode({'schedule': {
+      'running': {}, 'pending': [], 'waiting': [], 'failed': [],
+    }}), 'tomoe');
+    expect(model.failedTaskList, isEmpty);
+  });
+
   late ScriptTaskTracker tracker;
   setUp(() {
     tracker = ScriptTaskTracker()..setRunning(true);

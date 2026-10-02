@@ -25,6 +25,7 @@ class ScriptModel {
   final currentTaskKnown = false.obs;
   final pendingTaskList = <TaskItemModel>[].obs;
   final waitingTaskList = <TaskItemModel>[].obs;
+  final failedTaskList = <TaskItemModel>[].obs;
 
   ScriptModel(this.name);
 
@@ -34,6 +35,7 @@ class ScriptModel {
     bool? currentTaskKnown,
     List<TaskItemModel>? pendingTaskList,
     List<TaskItemModel>? waitingTaskList,
+    List<TaskItemModel>? failedTaskList,
   }) {
     if (state != null && this.state.value != state) this.state.value = state;
     if (runningTask != null && this.runningTask.value != runningTask) {
@@ -44,6 +46,7 @@ class ScriptModel {
     }
     if (pendingTaskList != null) this.pendingTaskList.value = pendingTaskList;
     if (waitingTaskList != null) this.waitingTaskList.value = waitingTaskList;
+    if (failedTaskList != null) this.failedTaskList.value = failedTaskList;
   }
 
   Map<String, dynamic> toJson() => {
@@ -52,5 +55,6 @@ class ScriptModel {
     'runningTask': runningTask.toJson(),
     'pendingTaskList': pendingTaskList.toJson(),
     'waitingTaskList': waitingTaskList.toJson(),
+    'failedTaskList': failedTaskList.toJson(),
   };
 }

@@ -1,9 +1,10 @@
 /// A task in the scheduler's existing execution order.
 class ScheduledScriptTask {
-  const ScheduledScriptTask(this.name, this.nextRun);
+  const ScheduledScriptTask(this.name, this.nextRun, {this.enabled = true});
 
   final String name;
   final String nextRun;
+  final bool enabled;
 }
 
 /// Tracks actual execution independently from legacy schedule candidates.
@@ -20,6 +21,8 @@ class ScriptTaskTracker {
   String _retryTask = '';
   List<ScheduledScriptTask> _pending = const [];
   List<ScheduledScriptTask> waiting = const [];
+  List<ScheduledScriptTask> failed = const [];
+  bool _hasFailedQueue = false;
 
   static final _start = RegExp(r'Scheduler: Start task `([^`]+)`');
   static final _end = RegExp(r'Scheduler: End task `([^`]+)`');
@@ -59,6 +62,7 @@ class ScriptTaskTracker {
     ScheduledScriptTask? candidate,
     required List<ScheduledScriptTask> pending,
     required List<ScheduledScriptTask> waiting,
+    List<ScheduledScriptTask>? failed,
   }) {
     // Legacy get_next can leave self.task stale after moving it to waiting.
     final waitingNames = waiting.map((task) => task.name.trim()).toSet();
@@ -68,6 +72,9 @@ class ScriptTaskTracker {
       ...pending,
     ];
     this.waiting = waiting;
+    _hasFailedQueue = failed != null;
+    this.failed = failed ?? const [];
+    if (_hasFailedQueue) _retryTask = '';
   }
 
   /// Keeps server order and recovers the queue head removed by legacy OAS.
@@ -79,7 +86,7 @@ class ScriptTaskTracker {
     ];
     return ordered.where((task) {
       final name = task.name.trim();
-      return name.isNotEmpty && name != currentTask && names.add(name);
+      return name.isNotEmpty && name != currentTask && !failed.any((retry) => retry.name == name) && names.add(name);
     }).toList();
   }
 
@@ -118,7 +125,7 @@ class ScriptTaskTracker {
     currentTaskKnown = true;
     if (boundary.started) {
       _retryTask = '';
-    } else if (boundary.retry) {
+    } else if (boundary.retry && !_hasFailedQueue) {
       // OAS completion_gate blocks other tasks until this one is retried.
       _retryTask = boundary.name;
     } else if (boundary.name.isNotEmpty) {

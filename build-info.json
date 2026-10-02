@@ -1,7 +1,7 @@
 {
   "version": "2.0.3",
   "build": 23,
-  "revision": "home-backdrop-divider-recovery-20261001",
+  "revision": "independent-failed-task-queue-20261002",
   "flutter": "3.47.5",
   "dart": "3.13.4",
   "testsPassed": 116,
@@ -9,8 +9,10 @@
   "nativeEdgeResizesChecked": 32,
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
   "defaultOasBranch": "self",
-  "appSoSha256": "12AD46538704334255A3944989C13C26F4F99815852D94BCD3D203C648A752AC",
-  "exeSha256": "86030CB54736801915A2FA63A3A7BA219CFA308B2104E6C3C72A3446545E5A42",
+  "appSoSha256": "6B6E99924FFD64C645AA1D3C8A82F41AB7723A6AC4771B62B0E595D5A7261CBB",
+  "exeSha256": "F6057C2C7E364C78116513DA2B1C6F8C922E7E3A4C2AA54D79818DFBC42F304F",
   "workbenchResizeScenariosPassed": 5,
-  "workbenchBreakpointTransitionsChecked": 45
+  "workbenchBreakpointTransitionsChecked": 45,
+  "backendRegressionTestsPassed": 67,
+  "frontendRegressionTestsPassed": 32
 }

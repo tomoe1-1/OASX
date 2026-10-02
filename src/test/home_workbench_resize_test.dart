@@ -257,6 +257,28 @@ void main() {
     }
   }
 
+  testWidgets('failed tasks show a separate retry time and clear reactively', (tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(1500, 800));
+    final model = Get.find<ScriptService>().findScriptModel('tomoe')!;
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Orochi', '2026-10-02 14:00:00'),
+    ]);
+    await tester.pumpWidget(_workbench(controller));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.textContaining('失败任务'), findsOneWidget);
+    expect(find.text('下次重试：2026-10-02 14:00:00'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    for (final size in [const Size(1000, 700), const Size(700, 600)]) {
+      await resize(tester, size.width, size.height);
+      expect(find.text('下次重试：2026-10-02 14:00:00'), findsOneWidget);
+    }
+    model.failedTaskList.clear();
+    await tester.pump();
+    expect(find.text('暂无失败任务'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'actual workbench restores all panes over repeated native-size breakpoints',
     (tester) async {

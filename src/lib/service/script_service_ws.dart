@@ -77,6 +77,8 @@ extension ScriptServiceWsX on ScriptService {
       candidate: run,
       pending: _readScheduledTasks(schedule['pending']),
       waiting: _readScheduledTasks(schedule['waiting']),
+      failed: schedule.containsKey('failed')
+          ? _readScheduledTasks(schedule['failed']) : null,
     );
     _publishTrackedTasks(name);
   }
@@ -85,7 +87,8 @@ extension ScriptServiceWsX on ScriptService {
     if (value is! Map) return null;
     final taskName = value['name']?.toString().trim() ?? '';
     if (taskName.isEmpty) return null;
-    return ScheduledScriptTask(taskName, value['next_run']?.toString() ?? '');
+    return ScheduledScriptTask(taskName, value['next_run']?.toString() ?? '',
+        enabled: value['enabled'] != false);
   }
 
   List<ScheduledScriptTask> _readScheduledTasks(dynamic value) => value is List
@@ -103,6 +106,9 @@ extension ScriptServiceWsX on ScriptService {
           : TaskItemModel(name, tracker.currentTask, ''),
       pendingTaskList: tracker.pending
           .map((task) => TaskItemModel(name, task.name, task.nextRun))
+          .toList(),
+      failedTaskList: tracker.failed
+          .map((task) => TaskItemModel(name, task.name, task.nextRun, enabled: task.enabled))
           .toList(),
       waitingTaskList: tracker.waiting
           .map((task) => TaskItemModel(name, task.name, task.nextRun))

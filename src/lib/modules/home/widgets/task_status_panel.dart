@@ -70,6 +70,7 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
           _buildSearchField(),
           const SizedBox(height: Spacing.md),
           Expanded(
+            flex: 2,
             child: visibleTasks.isEmpty
                 ? Center(child: Text(_emptyMessage))
                 : ListView.separated(
@@ -98,6 +99,45 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                         dragEnabled: widget.controller.canUseDesktopDragCopy,
                         swipeEnabled: !_isSwipeDisabled(task),
                         activeDragPayload: dragPayload,
+                      );
+                    },
+                  ),
+          ),
+          const Divider(height: 24),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text('失败任务（${widget.scriptModel.failedTaskList.length}）',
+                style: Theme.of(context).textTheme.titleSmall),
+          ),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('主任务优先；重试时间到后，等待排队任务完成',
+                style: TextStyle(fontSize: 12)),
+          ),
+          const SizedBox(height: Spacing.sm),
+          Expanded(
+            child: widget.scriptModel.failedTaskList.isEmpty
+                ? const Center(child: Text('暂无失败任务'))
+                : ListView.separated(
+                    key: const PageStorageKey<String>('home-failed-task-list'),
+                    itemCount: widget.scriptModel.failedTaskList.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (context, index) {
+                      final retry = widget.scriptModel.failedTaskList[index];
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        leading: Icon(Icons.error_outline_rounded,
+                            color: Theme.of(context).colorScheme.error),
+                        title: Text(retry.taskName.value.tr),
+                        subtitle: Text(retry.enabled
+                            ? '下次重试：${retry.nextRun.value}'
+                            : '已停用，重试暂停\n原重试时间：${retry.nextRun.value}'),
+                        trailing: IconButton(
+                          tooltip: I18n.homeOpenTaskParams.tr,
+                          icon: const Icon(Icons.tune_rounded),
+                          onPressed: () => widget.onEditTask(retry.taskName.value),
+                        ),
                       );
                     },
                   ),

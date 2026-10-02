@@ -13,9 +13,10 @@ class TaskItemModel {
 
   /// Optional group name for grouping in the UI.
   String? groupName;
+  final bool enabled;
 
   /// Creates a task item with the provided values.
-  TaskItemModel(this.scriptName, taskName, nextRun, {this.groupName = ''}) {
+  TaskItemModel(this.scriptName, taskName, nextRun, {this.groupName = '', this.enabled = true}) {
     this.taskName.value = taskName;
     this.nextRun.value = nextRun;
   }
