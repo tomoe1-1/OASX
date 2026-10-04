@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.2.0** —— 统计页重做为可交互 Dashboard：模块可拖动排序与原位放大，顶部常驻全局筛选，图表悬停联动，指标区滚动吸顶，任务行滑出执行详情抽屉。
+**当前版本：v2.3.0** —— 失败任务行补齐与普通任务一致的快捷操作，可直接「立即执行 / 等待顺延 / 打开参数」；修复联动配置下快捷调度误用外层脚本名导致的写错任务与失败误报。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.2.0 --build-number 25
+flutter build windows --release --build-name 2.3.0 --build-number 26
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.2.0 --build-number 25
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.2.0` / `25` |
+| version / build | `2.3.0` / `26` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.2.0 --build-number 25
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `D498E3026396688276D92B7029576BFB3B3CB806ECDA2E7DBAB563B9FCD20921` |
-| `oasx.exe` | `8573D112F169CC01C8909058A9FF17E06DD8350BFABD9519B603C8D7E4F91AF6` |
+| `data/app.so` | `E6F11A6CB2BF2CC649C59219F134FB67068F0F7873B8BE38C178E7F8BC684B40` |
+| `oasx.exe` | `66D3E845FA4A74164ED9E7276ECFD6D4CC4F50C24C1B3630532306322C68E421` |
 
-本机手工测试链（`frontend_server` + `flutter_tester`）跑通全部 21 个测试文件，共 **163 项通过**：新增 9 项 Dashboard 交互测试（拖拽、放大、联动、吸顶、抽屉与 320/480/760 窄窗口布局）、3 项统计控制器测试与 1 项真实统计页渲染检查，其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏与实际工作台。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 基线对照失败方式一致，与本次改动无关。Dashboard 尚未以当前后端数据做人工鼠标操作验收。
+本机手工测试链（`frontend_server` + `flutter_tester`）跑通全部 21 个测试文件，共 **165 项通过**：新增 2 项失败任务操作回归（三按钮路由与窄窗口自适应、联动配置逐一下发与失败传播）、9 项 Dashboard 交互测试（拖拽、放大、联动、吸顶、抽屉与 320/480/760 窄窗口布局）、3 项统计控制器测试与 1 项真实统计页渲染检查，其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏与实际工作台。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 / 2.2.0 基线对照失败方式一致，与本次改动无关。Dashboard 尚未以当前后端数据做人工鼠标操作验收。
 
 ## 自动更新
 
@@ -134,6 +134,19 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.3.0 失败任务操作
+
+失败任务队列中的每一行现在与工作台普通任务行使用同一套操作栏，不必再切回任务列表去处理。
+
+- **立即执行**：把失败任务按「立刻运行」重新入队，等待中的排队任务完成后执行。
+- **等待**：按设置的顺延时间刷新重试时间，不立即抢占。
+- **打开参数**：直接进入该任务的参数页，与普通任务行一致。
+- 操作栏在窄窗口（260 / 360 / 700 px 宽）下不溢出；任务被手动禁用、批量快捷调度进行中、或已有其他任务在运行时，快捷按钮自动置灰，仅保留参数入口。
+
+修复：快捷调度写「下次执行时间」时，此前对**每个联动配置**都沿用外层传入的脚本名与任务名，导致联动配置写错任务或状态判断错误；现改为下发各自解析后的脚本与任务名，并在任一联动配置失败时如实向上返回失败，不再误报成功。
+
+详细说明见 [2.3.0 失败任务操作](./docs/2.3.0失败任务操作.md)。
 
 ## 2.2.0 Dashboard 交互
 

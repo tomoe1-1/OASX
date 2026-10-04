@@ -48,10 +48,9 @@ class _TaskMeta extends StatelessWidget {
           DateTimePicker(
             value: task.timeText,
             notHoverStyle: Theme.of(context).textTheme.labelMedium,
-            hoverStyle: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.primary),
+            hoverStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
             onChange: (value) => unawaited(onSetNextRun(task.name, value)),
           ),
         ],
@@ -68,19 +67,27 @@ class _TaskTypeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = switch (type) {
-      TaskStatusType.running =>
-        Icon(Icons.bolt_rounded, color: SemanticColors.success(context)),
-      TaskStatusType.pending =>
-        Icon(Icons.layers_rounded, color: SemanticColors.warning(context)),
-      TaskStatusType.waiting =>
-        Icon(Icons.schedule_rounded, color: SemanticColors.neutral(context)),
+      TaskStatusType.running => Icon(
+        Icons.bolt_rounded,
+        color: SemanticColors.success(context),
+      ),
+      TaskStatusType.pending => Icon(
+        Icons.layers_rounded,
+        color: SemanticColors.warning(context),
+      ),
+      TaskStatusType.waiting => Icon(
+        Icons.schedule_rounded,
+        color: SemanticColors.neutral(context),
+      ),
     };
     return SizedBox(width: 28, height: 28, child: Center(child: icon));
   }
 }
 
-class _TaskActionBar extends StatelessWidget {
-  const _TaskActionBar({
+/// Shared quick scheduling and parameter actions for normal and failed tasks.
+class TaskStatusActionBar extends StatelessWidget {
+  const TaskStatusActionBar({
+    super.key,
     required this.onQuickRun,
     required this.onQuickWait,
     required this.onEditTask,

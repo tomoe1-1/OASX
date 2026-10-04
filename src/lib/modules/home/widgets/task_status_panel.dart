@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/home/controllers/dashboard_controller.dart';
 import 'package:oasx/modules/home/models/config_model.dart';
+import 'package:oasx/modules/home/widgets/split_scroll_row.dart';
 import 'package:oasx/modules/home/widgets/task_status_row.dart';
 import 'package:oasx/translation/i18n_content.dart';
 
@@ -78,7 +79,8 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                     controller: _scrollController,
                     padding: EdgeInsets.zero,
                     itemCount: visibleTasks.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.smPlus),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: Spacing.smPlus),
                     itemBuilder: (context, index) {
                       final task = visibleTasks[index];
                       return TaskStatusRow(
@@ -106,13 +108,17 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
           const Divider(height: 24),
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('失败任务（${widget.scriptModel.failedTaskList.length}）',
-                style: Theme.of(context).textTheme.titleSmall),
+            child: Text(
+              '失败任务（${widget.scriptModel.failedTaskList.length}）',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
           const Align(
             alignment: Alignment.centerLeft,
-            child: Text('主任务优先；重试时间到后，等待排队任务完成',
-                style: TextStyle(fontSize: 12)),
+            child: Text(
+              '主任务优先；重试时间到后，等待排队任务完成',
+              style: TextStyle(fontSize: 12),
+            ),
           ),
           const SizedBox(height: Spacing.sm),
           Expanded(
@@ -124,19 +130,61 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                     separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
                       final retry = widget.scriptModel.failedTaskList[index];
-                      return ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                        leading: Icon(Icons.error_outline_rounded,
-                            color: Theme.of(context).colorScheme.error),
-                        title: Text(retry.taskName.value.tr),
-                        subtitle: Text(retry.enabled
-                            ? '下次重试：${retry.nextRun.value}'
-                            : '已停用，重试暂停\n原重试时间：${retry.nextRun.value}'),
-                        trailing: IconButton(
-                          tooltip: I18n.homeOpenTaskParams.tr,
-                          icon: const Icon(Icons.tune_rounded),
-                          onPressed: () => widget.onEditTask(retry.taskName.value),
+                      final taskName = retry.taskName.value;
+                      final canQuickSchedule =
+                          retry.enabled &&
+                          !quickScheduleLocked &&
+                          widget.canQuickScheduleTask(taskName);
+                      final background = Theme.of(context).colorScheme.surface;
+                      return ColoredBox(
+                        key: ValueKey('failed-task::$taskName'),
+                        color: background,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: SplitScrollRow(
+                            minHeight: 64,
+                            trailingExtent: 132,
+                            trailingBackgroundColor: background,
+                            trailing: TaskStatusActionBar(
+                              onQuickRun: canQuickSchedule
+                                  ? () => widget.onQuickRun(taskName)
+                                  : null,
+                              onQuickWait: canQuickSchedule
+                                  ? () => widget.onQuickWait(taskName)
+                                  : null,
+                              onEditTask: () => widget.onEditTask(taskName),
+                            ),
+                            leading: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.error_outline_rounded,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                                const SizedBox(width: Spacing.sm),
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      taskName.tr,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                    ),
+                                    Text(
+                                      retry.enabled
+                                          ? '下次重试：${retry.nextRun.value}'
+                                          : '已停用，重试暂停\n原重试时间：${retry.nextRun.value}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelMedium,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     },

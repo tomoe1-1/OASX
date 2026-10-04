@@ -86,7 +86,7 @@ class TaskStatusRow extends StatelessWidget {
             minHeight: 40,
             trailingExtent: _actionExtent,
             trailingBackgroundColor: rowBackground,
-            trailing: _TaskActionBar(
+            trailing: TaskStatusActionBar(
               onQuickRun: !quickScheduleLocked && canQuickSchedule
                   ? () => onQuickRun(task.name)
                   : null,
@@ -145,10 +145,12 @@ class TaskStatusRow extends StatelessWidget {
   Color _borderColor(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return switch (task.type) {
-      TaskStatusType.running =>
-        SemanticColors.success(context).withValues(alpha: 0.28),
-      TaskStatusType.pending =>
-        SemanticColors.warning(context).withValues(alpha: 0.3),
+      TaskStatusType.running => SemanticColors.success(
+        context,
+      ).withValues(alpha: 0.28),
+      TaskStatusType.pending => SemanticColors.warning(
+        context,
+      ).withValues(alpha: 0.3),
       TaskStatusType.waiting => scheme.outlineVariant.withValues(alpha: 0.7),
     };
   }

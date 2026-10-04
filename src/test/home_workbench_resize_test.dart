@@ -21,6 +21,7 @@ import 'package:oasx/modules/home/widgets/home_workbench_body.dart';
 import 'package:oasx/modules/home/widgets/log_center_panel.dart';
 import 'package:oasx/modules/home/widgets/statistics_panel.dart';
 import 'package:oasx/modules/home/widgets/task_parameter_panel.dart';
+import 'package:oasx/modules/home/widgets/task_status_panel.dart';
 import 'package:oasx/modules/home/widgets/workbench_sidebar_panel.dart';
 import 'package:oasx/modules/log/log_browser_models.dart';
 import 'package:oasx/modules/log/script_log_browser_controller.dart';
@@ -276,7 +277,166 @@ void main() {
     expect(controller.isTaskEnabled(model, 'Duel'), isTrue);
   });
 
-  testWidgets('failed tasks show a separate retry time and clear reactively', (tester) async {
+  test(
+    'quick wait uses each linked config and propagates endpoint failure',
+    () async {
+      final scripts = Get.find<ScriptService>();
+      scripts.addScriptModel(ScriptModel('tomoe-linked'));
+      controller.toggleLinkMode();
+      controller.setScriptLinked('tomoe', true);
+      controller.setScriptLinked('tomoe-linked', true);
+      final requests = <String>[];
+      var requestSucceeds = true;
+      NetOptions.instance.dio.interceptors.clear();
+      NetOptions.instance.dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path.endsWith('/args')) {
+              handler.resolve(Response(requestOptions: options, statusCode: 200,
+                  data: {'scheduler': [{'name': 'enable', 'type': 'boolean', 'value': true}]}));
+              return;
+            }
+            requests.add(options.path);
+            expect(options.queryParameters['target_dt'], '');
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: requestSucceeds,
+              ),
+            );
+          },
+        ),
+      );
+      expect(
+        await controller.quickScheduleTask(
+          scriptName: 'tomoe',
+          taskName: 'Orochi',
+          runNow: false,
+        ),
+        isTrue,
+      );
+      expect(requests, [
+        '/tomoe/Orochi/sync_next_run',
+        '/tomoe-linked/Orochi/sync_next_run',
+      ]);
+      requests.clear();
+      requestSucceeds = false;
+      expect(
+        await controller.quickScheduleTask(
+          scriptName: 'tomoe',
+          taskName: 'Orochi',
+          runNow: false,
+        ),
+        isFalse,
+      );
+      expect(requests, [
+        '/tomoe/Orochi/sync_next_run',
+        '/tomoe-linked/Orochi/sync_next_run',
+      ]);
+    },
+  );
+
+  testWidgets('failed task actions route the task and fit narrow windows', (
+    tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final model = Get.find<ScriptService>().findScriptModel('tomoe')!;
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Orochi', '2026-10-04 20:00:00'),
+    ]);
+    final actions = <String>[];
+    await tester.binding.setSurfaceSize(const Size(700, 600));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TaskStatusPanel(
+            controller: controller,
+            scriptModel: model,
+            canQuickScheduleTask: (name) =>
+                controller.canQuickScheduleTask(model, name),
+            onSetNextRun: (_, _) async {},
+            onQuickRun: (name) async => actions.add('run:$name'),
+            onQuickWait: (name) async => actions.add('wait:$name'),
+            onEditTask: (name) async => actions.add('edit:$name'),
+          ),
+        ),
+      ),
+    );
+    final row = find.byKey(const ValueKey('failed-task::Orochi'));
+    for (final width in [700.0, 360.0, 260.0]) {
+      await tester.binding.setSurfaceSize(Size(width, 600));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'failed row at $width');
+      for (final icon in [
+        Icons.flash_on_rounded,
+        Icons.schedule_rounded,
+        Icons.tune_rounded,
+      ]) {
+        final button = find.descendant(of: row, matching: find.byIcon(icon));
+        expect(button, findsOneWidget);
+        await tester.tap(button);
+      }
+    }
+    expect(
+      actions,
+      List.generate(
+        3,
+        (_) => ['run:Orochi', 'wait:Orochi', 'edit:Orochi'],
+      ).expand((items) => items).toList(),
+    );
+
+    bool enabled(IconData icon) =>
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: row,
+                matching: find.byWidgetPredicate(
+                  (widget) =>
+                      widget is IconButton &&
+                      widget.icon is Icon &&
+                      (widget.icon as Icon).icon == icon,
+                ),
+              ),
+            )
+            .onPressed !=
+        null;
+    void expectQuickActionsDisabled() {
+      expect(enabled(Icons.flash_on_rounded), isFalse);
+      expect(enabled(Icons.schedule_rounded), isFalse);
+      expect(enabled(Icons.tune_rounded), isTrue);
+    }
+
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Orochi', '2026-10-04 20:00:00', enabled: false),
+    ]);
+    await tester.pumpAndSettle();
+    expectQuickActionsDisabled();
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Orochi', '2026-10-04 20:00:00'),
+    ]);
+    controller.bulkQuickScheduleMode.value = HomeBulkQuickScheduleMode.runNow;
+    await tester.pumpAndSettle();
+    expectQuickActionsDisabled();
+    controller.bulkQuickScheduleMode.value = HomeBulkQuickScheduleMode.none;
+    model.update(
+      state: ScriptState.running,
+      runningTask: TaskItemModel('tomoe', 'Orochi', ''),
+    );
+    await tester.pumpAndSettle();
+    expectQuickActionsDisabled();
+    model.update(
+      state: ScriptState.inactive,
+      runningTask: TaskItemModel.empty(),
+    );
+    await tester.pumpAndSettle();
+    expect(enabled(Icons.flash_on_rounded), isTrue);
+    expect(enabled(Icons.schedule_rounded), isTrue);
+  });
+
+  testWidgets('failed tasks show a separate retry time and clear reactively', (
+    tester,
+  ) async {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(const Size(1500, 800));
     final model = Get.find<ScriptService>().findScriptModel('tomoe')!;
