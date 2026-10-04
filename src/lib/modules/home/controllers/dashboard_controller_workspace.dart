@@ -166,6 +166,12 @@ extension HomeDashboardWorkspaceX on HomeDashboardController {
           .map((task) => task.taskName.value.trim())
           .where((taskName) => taskName.isNotEmpty),
     );
+    names.addAll(
+      model.failedTaskList
+          .where((task) => task.enabled)
+          .map((task) => task.taskName.value.trim())
+          .where((taskName) => taskName.isNotEmpty),
+    );
     return names;
   }
 

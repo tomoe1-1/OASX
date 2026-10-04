@@ -1,18 +1,19 @@
 {
-  "version": "2.0.3",
-  "build": 23,
-  "revision": "independent-failed-task-queue-20261002",
+  "version": "2.1.0",
+  "build": 24,
+  "revision": "failed-task-selection-fix-20261004",
   "flutter": "3.47.5",
   "dart": "3.13.4",
-  "testsPassed": 116,
+  "testsPassed": 147,
   "nativeResizeScenariosPassed": 3,
   "nativeEdgeResizesChecked": 32,
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
   "defaultOasBranch": "self",
-  "appSoSha256": "6B6E99924FFD64C645AA1D3C8A82F41AB7723A6AC4771B62B0E595D5A7261CBB",
-  "exeSha256": "F6057C2C7E364C78116513DA2B1C6F8C922E7E3A4C2AA54D79818DFBC42F304F",
+  "appSoSha256": "470236F804FFCDA66005E67B85EB440485E8BE1802AF9DA6D7D2C0C42038938D",
+  "exeSha256": "0C58466DA2961FB752A81D098E2172000101CD49CC1C5FD731495D614C6863FA",
   "workbenchResizeScenariosPassed": 5,
   "workbenchBreakpointTransitionsChecked": 45,
   "backendRegressionTestsPassed": 67,
-  "frontendRegressionTestsPassed": 32
+  "frontendRegressionTestsPassed": 32,
+  "selectionRegressionTestsPassed": 33
 }

@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.0.3** —— 标题栏与主页共用全幅动态背景，白色高透明框与更通透的工作台；修复分隔条拖动被窗口缩放中断后留下的临时栏宽。
+**当前版本：v2.1.0** —— 失败任务队列中仍处于启用状态的任务继续保留在工作台任务选择列表，任务失败进入重试队列后不再从可选列表消失；手动禁用后不会被重新自动纳入选择。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.0.3 --build-number 23
+flutter build windows --release --build-name 2.1.0 --build-number 24
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.0.3 --build-number 23
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.0.3` / `23` |
+| version / build | `2.1.0` / `24` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.0.3 --build-number 23
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `12AD46538704334255A3944989C13C26F4F99815852D94BCD3D203C648A752AC` |
-| `oasx.exe` | `86030CB54736801915A2FA63A3A7BA219CFA308B2104E6C3C72A3446545E5A42` |
+| `data/app.so` | `470236F804FFCDA66005E67B85EB440485E8BE1802AF9DA6D7D2C0C42038938D` |
+| `oasx.exe` | `0C58466DA2961FB752A81D098E2172000101CD49CC1C5FD731495D614C6863FA` |
 
-当前/下个任务、实时状态、启动页、主页背景、窗口状态、OAS 目录恢复、标题栏和实际工作台相关测试共 **116 项通过**。新增真实日志、统计、参数编辑页面的 45 次跨栏转换，以及左右分隔条拖动被缩窗中断的回归。沿用上一版已验证的原生尺寸同步补丁。实际电脑上的右侧残框仍需以安装后的鼠标拖动确认。
+本机手工测试链（`frontend_server` + `flutter_tester`）跑通全部 19 个测试文件，共 **147 项通过**：覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏与实际工作台。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），已用改动前的基线副本对照确认与本次改动无关。实际电脑上的右侧残框仍需以安装后的鼠标拖动确认。
 
 ## 自动更新
 
@@ -134,6 +134,12 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.1.0 失败任务选择
+
+- 工作台任务选择列表纳入失败任务队列中仍处于启用状态的任务，任务失败进入重试队列后不再从可选列表消失。
+- 失败任务被手动禁用后不再被自动重新纳入选择；任务重新入队时恢复可选中状态。
+- 详细说明见 [2.1.0 失败任务选择](./docs/2.1.0失败任务选择.md)。
 
 ## 2.0.3 背景与跨栏缩放
 

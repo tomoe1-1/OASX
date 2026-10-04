@@ -257,6 +257,25 @@ void main() {
     }
   }
 
+  test('enabled selection survives failure and respects manual disabling', () {
+    final model = Get.find<ScriptService>().findScriptModel('tomoe')!;
+    expect(controller.isTaskEnabled(model, 'Duel'), isTrue);
+    model.update(
+      waitingTaskList: [],
+      failedTaskList: [TaskItemModel('tomoe', 'Duel', '2026-10-04 20:00:00')],
+    );
+    expect(controller.isTaskEnabled(model, 'Duel'), isTrue);
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Duel', '2026-10-04 20:00:00', enabled: false),
+    ]);
+    expect(controller.isTaskEnabled(model, 'Duel'), isFalse);
+    model.update(
+      failedTaskList: [],
+      pendingTaskList: [TaskItemModel('tomoe', 'Duel', '')],
+    );
+    expect(controller.isTaskEnabled(model, 'Duel'), isTrue);
+  });
+
   testWidgets('failed tasks show a separate retry time and clear reactively', (tester) async {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(const Size(1500, 800));
