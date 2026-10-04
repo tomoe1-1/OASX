@@ -76,28 +76,36 @@ class HomeStatisticsController extends GetxController {
   /// Sequence used to invalidate stale stats work.
   int _statsRevision = 0;
 
-  /// Sequence used to show chart metric loading transitions.
-  int _historyMetricRequestId = 0;
-
   /// Cache key for sorted chart entries.
   String _taskEntriesCacheKey = '';
 
   /// Cached chart entries for the last derived state.
   List<MapEntry<String, ScriptTaskStatistics>> _taskEntriesCache = const [];
+  ScriptStatisticsDay? _taskEntriesCacheSource;
+
+  List<String> get dashboardModuleOrder =>
+      dashboardController.statisticsModuleOrder;
+
+  void saveDashboardModuleOrder(List<String> order) {
+    dashboardController.saveStatisticsModuleOrder(order);
+  }
 
   /// Sequential queue that preserves SSE event ordering during async parsing.
   Future<void> _streamEventQueue = Future<void>.value();
 
   @override
   void onInit() {
-    _dashboardWorker = everAll([
-      dashboardController.activeScriptName,
-      dashboardController.activeWorkbenchTab,
-      dashboardController.activeWorkbenchSidebarTab,
-      dashboardController.workbenchLayoutMode,
-    ], (_) {
-      unawaited(syncStatisticsBinding());
-    });
+    _dashboardWorker = everAll(
+      [
+        dashboardController.activeScriptName,
+        dashboardController.activeWorkbenchTab,
+        dashboardController.activeWorkbenchSidebarTab,
+        dashboardController.workbenchLayoutMode,
+      ],
+      (_) {
+        unawaited(syncStatisticsBinding());
+      },
+    );
     unawaited(syncStatisticsBinding());
     super.onInit();
   }
@@ -131,7 +139,8 @@ class HomeStatisticsController extends GetxController {
     final descending = historySortDescending.value;
     final cacheKey =
         '${currentStatistics.dateKey}|${currentStatistics.totalRuntimeSeconds}|${metric.name}|${sortField.name}|$descending';
-    if (_taskEntriesCacheKey == cacheKey) {
+    if (_taskEntriesCacheKey == cacheKey &&
+        identical(_taskEntriesCacheSource, currentStatistics)) {
       return _taskEntriesCache;
     }
     final entries = currentStatistics.tasks.entries.where((entry) {
@@ -142,13 +151,14 @@ class HomeStatisticsController extends GetxController {
     }).toList();
     entries.sort((left, right) {
       final compareValue = switch (sortField) {
-        ScriptStatisticsChartSortField.data => left.value
-            .metricValueFor(metric)
-            .compareTo(right.value.metricValueFor(metric)),
+        ScriptStatisticsChartSortField.data =>
+          left.value
+              .metricValueFor(metric)
+              .compareTo(right.value.metricValueFor(metric)),
         ScriptStatisticsChartSortField.time => _compareLatestRunTime(
-            left.value,
-            right.value,
-          ),
+          left.value,
+          right.value,
+        ),
       };
       if (compareValue != 0) {
         return descending ? -compareValue : compareValue;
@@ -156,6 +166,7 @@ class HomeStatisticsController extends GetxController {
       return left.key.compareTo(right.key);
     });
     _taskEntriesCacheKey = cacheKey;
+    _taskEntriesCacheSource = currentStatistics;
     _taskEntriesCache =
         List<MapEntry<String, ScriptTaskStatistics>>.unmodifiable(entries);
     return _taskEntriesCache;
@@ -223,8 +234,8 @@ class HomeStatisticsController extends GetxController {
   void selectHistorySortField(ScriptStatisticsChartSortField field) {
     final resolvedField =
         field == ScriptStatisticsChartSortField.time && !canSortByTime
-            ? ScriptStatisticsChartSortField.data
-            : field;
+        ? ScriptStatisticsChartSortField.data
+        : field;
     if (historySortField.value == resolvedField) {
       return;
     }
@@ -243,15 +254,8 @@ class HomeStatisticsController extends GetxController {
     if (historyMetric.value == metric) {
       return;
     }
-    final requestId = ++_historyMetricRequestId;
     historyMetric.value = metric;
     _syncSelections();
-    historyChartLoading.value = true;
-    await Future<void>.delayed(const Duration(milliseconds: 16));
-    if (requestId != _historyMetricRequestId) {
-      return;
-    }
-    historyChartLoading.value = false;
   }
 
   /// Loads dates first, then binds the newest available selected date.
@@ -299,11 +303,12 @@ class HomeStatisticsController extends GetxController {
     final shouldUseLiveStream =
         isStatisticsDateToday(dateKey) && !PlatformUtils.isWeb;
     final statsRevision = ++_statsRevision;
+    statisticsLoading.value = true;
     await _stopStream();
+    if (!_isStatsRequestActive(statsRevision, scriptName, dateKey)) return;
     _resetSelectedDateState();
     lastErrorMessage.value = '';
     if (shouldUseLiveStream) {
-      statisticsLoading.value = false;
       await _startTodayStream(scriptName, dateKey, statsRevision);
       return;
     }
@@ -318,19 +323,18 @@ class HomeStatisticsController extends GetxController {
       statistics.value = day;
       connectionState.value =
           isStatisticsDateToday(dateKey) && PlatformUtils.isWeb
-              ? ScriptStatisticsConnectionState.connected
-              : ScriptStatisticsConnectionState.idle;
+          ? ScriptStatisticsConnectionState.connected
+          : ScriptStatisticsConnectionState.idle;
       _syncSelections();
     } catch (error) {
       if (!_isStatsRequestActive(statsRevision, scriptName, dateKey)) {
         return;
       }
       statisticsLoading.value = false;
-      statistics.value = null;
       connectionState.value =
           isStatisticsDateToday(dateKey) && PlatformUtils.isWeb
-              ? ScriptStatisticsConnectionState.error
-              : ScriptStatisticsConnectionState.idle;
+          ? ScriptStatisticsConnectionState.error
+          : ScriptStatisticsConnectionState.idle;
       lastErrorMessage.value = error.toString();
     }
   }
@@ -405,8 +409,8 @@ class HomeStatisticsController extends GetxController {
 
   /// Resets selected-date data before a reload starts.
   void _resetSelectedDateState() {
-    statistics.value = null;
-    selectedTaskName.value = '';
+    // Retain the last snapshot until the new date arrives. The fixed filters,
+    // module positions and animated values remain mounted during the request.
     latestUpdatedTaskName.value = '';
     latestUpdatedTaskPulse.value = 0;
     _clearDerivedCaches();
@@ -418,6 +422,9 @@ class HomeStatisticsController extends GetxController {
       return;
     }
     final normalizedMessage = message == 'stream_closed' ? '' : (message ?? '');
+    if (state == ApiSseConnectionState.error) {
+      statisticsLoading.value = false;
+    }
     connectionState.value = switch (state) {
       ApiSseConnectionState.connecting =>
         ScriptStatisticsConnectionState.connecting,
@@ -464,6 +471,7 @@ class HomeStatisticsController extends GetxController {
             return;
           }
           statistics.value = day;
+          statisticsLoading.value = false;
           latestUpdatedTaskName.value = '';
           _clearDerivedCaches();
           _syncSelections();
@@ -510,12 +518,14 @@ class HomeStatisticsController extends GetxController {
     }
     final preferredTask = selectedTaskName.value.trim();
     final hasPreferredTask = entries.any((entry) => entry.key == preferredTask);
-    selectedTaskName.value =
-        hasPreferredTask ? preferredTask : entries.first.key;
+    selectedTaskName.value = hasPreferredTask
+        ? preferredTask
+        : entries.first.key;
   }
 
   /// Clears cached derived lists used by the chart.
   void _clearDerivedCaches() {
+    _taskEntriesCacheSource = null;
     _taskEntriesCacheKey = '';
     _taskEntriesCache = const [];
   }
@@ -553,11 +563,7 @@ class HomeStatisticsController extends GetxController {
   }
 
   /// Returns whether one selected-date request is still active.
-  bool _isStatsRequestActive(
-    int revision,
-    String scriptName,
-    String dateKey,
-  ) {
+  bool _isStatsRequestActive(int revision, String scriptName, String dateKey) {
     return revision == _statsRevision &&
         dashboardController.isStatsVisibleInCurrentLayout &&
         _boundScriptName == scriptName &&

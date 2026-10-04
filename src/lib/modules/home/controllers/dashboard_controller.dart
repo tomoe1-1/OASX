@@ -112,6 +112,17 @@ class HomeDashboardController extends GetxController {
     : _storage = storage ?? GetStorageHomeDashboardStorage();
 
   final HomeDashboardStorage _storage;
+
+  /// Persists dashboard module positions independently of pane widths.
+  List<String> get statisticsModuleOrder {
+    final raw = _storage.read('homeStatisticsModuleOrder');
+    return raw is List ? raw.whereType<String>().toList() : const [];
+  }
+
+  void saveStatisticsModuleOrder(List<String> order) {
+    _storage.write('homeStatisticsModuleOrder', order);
+  }
+
   static bool _hasCheckedStartupConnection = false;
   Worker? _workspaceSyncWorker;
   final controlScriptList = <String>[].obs;

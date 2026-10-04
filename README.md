@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.1.0** —— 失败任务队列中仍处于启用状态的任务继续保留在工作台任务选择列表，任务失败进入重试队列后不再从可选列表消失；手动禁用后不会被重新自动纳入选择。
+**当前版本：v2.2.0** —— 统计页重做为可交互 Dashboard：模块可拖动排序与原位放大，顶部常驻全局筛选，图表悬停联动，指标区滚动吸顶，任务行滑出执行详情抽屉。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.1.0 --build-number 24
+flutter build windows --release --build-name 2.2.0 --build-number 25
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.1.0 --build-number 24
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.1.0` / `24` |
+| version / build | `2.2.0` / `25` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.1.0 --build-number 24
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `470236F804FFCDA66005E67B85EB440485E8BE1802AF9DA6D7D2C0C42038938D` |
-| `oasx.exe` | `0C58466DA2961FB752A81D098E2172000101CD49CC1C5FD731495D614C6863FA` |
+| `data/app.so` | `D498E3026396688276D92B7029576BFB3B3CB806ECDA2E7DBAB563B9FCD20921` |
+| `oasx.exe` | `8573D112F169CC01C8909058A9FF17E06DD8350BFABD9519B603C8D7E4F91AF6` |
 
-本机手工测试链（`frontend_server` + `flutter_tester`）跑通全部 19 个测试文件，共 **147 项通过**：覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏与实际工作台。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），已用改动前的基线副本对照确认与本次改动无关。实际电脑上的右侧残框仍需以安装后的鼠标拖动确认。
+本机手工测试链（`frontend_server` + `flutter_tester`）跑通全部 21 个测试文件，共 **163 项通过**：新增 9 项 Dashboard 交互测试（拖拽、放大、联动、吸顶、抽屉与 320/480/760 窄窗口布局）、3 项统计控制器测试与 1 项真实统计页渲染检查，其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏与实际工作台。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 基线对照失败方式一致，与本次改动无关。Dashboard 尚未以当前后端数据做人工鼠标操作验收。
 
 ## 自动更新
 
@@ -134,6 +134,19 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.2.0 Dashboard 交互
+
+统计页重做为可交互 Dashboard，复用原有统计模型、日期与指标选择器、HTTP / SSE 数据流与执行详情组件。
+
+- **拖动模块网格**：按住模块左上角手柄移动到目标位置，其他模块平滑让位、松手吸附，顺序自动保存。
+- **模块原位放大**：点击模块标题或右上角放大按钮，底部缩略条切换模块，关闭后恢复原位置与滚动位置。
+- **顶部全局筛选**：日期、指标与排序常驻顶部，统计数字滚动过渡、图表平滑更新；日期请求期间保留上一次数据并显示加载进度。
+- **图表悬停联动**：悬停任一图表时三个图表同步高亮同一任务，其余任务淡化并显示竖向参考线。
+- **指标滚动吸顶**：向下滚动时汇总区连续收缩为单行固定栏，反向滚动连续还原。
+- **列表详情抽屉**：点击任务行右侧滑出执行详情，列表缩窄保持可见，上下按钮切换任务。
+
+详细说明见 [Dashboard 2.2.0 实现与验收](./docs/dashboard-2.2.0.md)，布局预览见 `docs/dashboard-preview.png`（测试数据渲染，不代表当前统计记录）。
 
 ## 2.1.0 失败任务选择
 

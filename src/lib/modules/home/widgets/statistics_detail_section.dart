@@ -23,9 +23,7 @@ class ScriptStatisticsDetailSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (taskName.trim().isEmpty) {
-      return _DetailPlaceholder(
-        label: I18n.homeStatsNoTaskSelected.tr,
-      );
+      return _DetailPlaceholder(label: I18n.homeStatsNoTaskSelected.tr);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,8 +39,9 @@ class ScriptStatisticsDetailSection extends StatelessWidget {
           ...List.generate(runs.length, (index) {
             final displayIndex = runs.length - index;
             return Padding(
-              padding:
-                  EdgeInsets.only(bottom: index == runs.length - 1 ? 0 : 8),
+              padding: EdgeInsets.only(
+                bottom: index == runs.length - 1 ? 0 : 8,
+              ),
               child: _RunCard(
                 taskName: taskName,
                 run: runs[index],
@@ -64,12 +63,13 @@ class _DetailPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.mdPlus, vertical: Spacing.lgPlus),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.mdPlus,
+        vertical: Spacing.lgPlus,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Radii.md),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Text(
         label,
@@ -104,58 +104,86 @@ class _RunCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(Spacing.mdPlus),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(Radii.pill),
-              ),
-              child: Text(
-                '$serialNumber',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ),
-            const SizedBox(width: Spacing.md),
-            Expanded(
-              child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 240) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    formatStatisticsClockTimeRange(run.startTime, run.endTime),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                    '#$serialNumber · ${formatStatisticsDuration(run.durationSeconds)}',
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  const SizedBox(height: Spacing.xsPlus),
+                  const SizedBox(height: 6),
+                  Text(
+                    formatStatisticsClockTimeRange(run.startTime, run.endTime),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     hasBattle
-                        ? '${I18n.homeStatsBattleCount.tr}: ${run.battleCount}  ·  '
-                            '${I18n.homeStatsBattleAvgDuration.tr}: '
-                            '${formatStatisticsDuration(run.battleAvgDurationSeconds)}'
+                        ? '${I18n.homeStatsBattleCount.tr}: ${run.battleCount}\n${I18n.homeStatsBattleAvgDuration.tr}: ${formatStatisticsDuration(run.battleAvgDurationSeconds)}'
                         : I18n.homeStatsNoBattle.tr,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: Spacing.md),
-            Text(
-              formatStatisticsDuration(run.durationSeconds),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
-            ),
-          ],
+                  child: Text(
+                    '$serialNumber',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Spacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        formatStatisticsClockTimeRange(
+                          run.startTime,
+                          run.endTime,
+                        ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.xsPlus),
+                      Text(
+                        hasBattle
+                            ? '${I18n.homeStatsBattleCount.tr}: ${run.battleCount}  ·  '
+                                  '${I18n.homeStatsBattleAvgDuration.tr}: '
+                                  '${formatStatisticsDuration(run.battleAvgDurationSeconds)}'
+                            : I18n.homeStatsNoBattle.tr,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: Spacing.md),
+                Text(
+                  formatStatisticsDuration(run.durationSeconds),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

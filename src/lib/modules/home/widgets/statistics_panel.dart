@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oasx/modules/home/controllers/statistics_controller.dart';
 import 'package:oasx/modules/home/models/script_statistics_models.dart';
-import 'package:oasx/modules/home/widgets/statistics_detail_section.dart';
 import 'package:oasx/modules/home/widgets/statistics_formatters.dart';
-import 'package:oasx/modules/home/widgets/statistics_history_chart.dart';
+import 'package:oasx/modules/home/widgets/interactive_statistics_dashboard.dart';
 import 'package:oasx/translation/i18n_content.dart';
 import 'package:oasx/config/design_tokens.dart';
 
-const _kStatisticsPanelHorizontalPadding = 12.0;
 const _kStatisticsPanelSectionSpacing = 12.0;
 const _kStatisticsSummarySpacing = 8.0;
 const _kStatisticsDropdownBorderRadius = 10.0;
@@ -29,8 +27,9 @@ class ScriptStatisticsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final statistics = controller.statistics.value;
-      final availableDates =
-          controller.availableDateKeys.toList(growable: false);
+      final availableDates = controller.availableDateKeys.toList(
+        growable: false,
+      );
       if (statistics == null) {
         return _StatisticsPlaceholder(
           label: _placeholderLabel(),
@@ -39,24 +38,22 @@ class ScriptStatisticsPanel extends StatelessWidget {
         );
       }
       final entries = controller.historyTaskEntries;
-      final detailRuns = controller.selectedHistoryDetailRuns;
       final canSortByTime = controller.canSortByTime;
-      return ListView(
-        padding: const EdgeInsets.fromLTRB(_kStatisticsPanelHorizontalPadding, _kStatisticsPanelSectionSpacing, _kStatisticsPanelHorizontalPadding, _kStatisticsPanelSectionSpacing, ),
-        children: [
-          _HeaderSection(
-            statistics: statistics,
-            availableDateKeys: availableDates,
-            controller: controller,
-            canSortByTime: canSortByTime,
-          ),
-          const SizedBox(height: _kStatisticsPanelSectionSpacing),
-          _ChartCard(
-            controller: controller,
-            entries: entries,
-            detailRuns: detailRuns,
-          ),
-        ],
+      return InteractiveStatisticsDashboard(
+        entries: entries,
+        metric: controller.historyMetric.value,
+        dateKey: statistics.dateKey,
+        loading: controller.statisticsLoading.value,
+        message: controller.lastErrorMessage.value,
+        initialOrder: controller.dashboardModuleOrder,
+        onOrderChanged: controller.saveDashboardModuleOrder,
+        onSelectTask: controller.selectHistoryTask,
+        filters: _HeaderSection(
+          statistics: statistics,
+          availableDateKeys: availableDates,
+          controller: controller,
+          canSortByTime: canSortByTime,
+        ),
       );
     });
   }
@@ -118,10 +115,9 @@ class _HeaderSection extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context)
-                .colorScheme
-                .outlineVariant
-                .withValues(alpha: 0.45),
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.45),
           ),
         ),
       ),
@@ -183,9 +179,9 @@ class _HeaderTopRow extends StatelessWidget {
           textAlign: TextAlign.end,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -254,11 +250,7 @@ class _StatusIcon extends StatelessWidget {
             color: _statusTone(context).withValues(alpha: 0.3),
           ),
         ),
-        child: Icon(
-          _statusIcon(),
-          size: 18,
-          color: _statusTone(context),
-        ),
+        child: Icon(_statusIcon(), size: 18, color: _statusTone(context)),
       ),
     );
   }
@@ -317,67 +309,6 @@ class _StatusIcon extends StatelessWidget {
       return SemanticColors.success(context);
     }
     return scheme.primary;
-  }
-}
-
-class _ChartCard extends StatelessWidget {
-  const _ChartCard({
-    required this.controller,
-    required this.entries,
-    required this.detailRuns,
-  });
-
-  final HomeStatisticsController controller;
-  final List<MapEntry<String, ScriptTaskStatistics>> entries;
-  final List<ScriptTaskRunRecord> detailRuns;
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final loading = controller.historyChartLoading.value;
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (entries.isEmpty)
-                Center(child: Text(I18n.homeStatsChartEmpty.tr))
-              else ...[
-                if (loading) ...[
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: Spacing.md),
-                      child: CircularProgressIndicator(strokeWidth: 2.4),
-                    ),
-                  ),
-                ],
-                Opacity(
-                  opacity: loading ? 0.32 : 1,
-                  child: IgnorePointer(
-                    ignoring: loading,
-                    child: ScriptStatisticsHistoryChart(
-                      entries: entries,
-                      metric: controller.historyMetric.value,
-                      focusedTaskName: controller.selectedTaskName.value,
-                      onSelectTask: controller.selectHistoryTask,
-                      flashingTaskName: controller.latestUpdatedTaskName.value,
-                      flashToken: controller.latestUpdatedTaskPulse.value,
-                      highlightRealtimeTask: controller.isTodaySelected,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: Spacing.mdPlus),
-              ScriptStatisticsDetailSection(
-                taskName: controller.selectedTaskName.value,
-                runs: detailRuns,
-              ),
-            ],
-          ),
-        ),
-      );
-    });
   }
 }
 
@@ -479,7 +410,7 @@ class _StatisticsPopupSelector<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolvedOption =
         options.where((option) => option.value == value).firstOrNull ??
-            options.firstOrNull;
+        options.firstOrNull;
     if (resolvedOption == null) {
       return const SizedBox.shrink();
     }
@@ -547,30 +478,32 @@ class _StatisticsPopupSelector<T> extends StatelessWidget {
         maxHeight:
             _kStatisticsDateMenuMaxVisibleItems * kMinInteractiveDimension,
       ),
-      items: options.map((option) {
-        return PopupMenuItem<T>(
-          value: option.value,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  option.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      items: options
+          .map((option) {
+            return PopupMenuItem<T>(
+              value: option.value,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      option.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (option.value == resolvedOption.value) ...[
+                    const SizedBox(width: Spacing.sm),
+                    Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ],
+                ],
               ),
-              if (option.value == resolvedOption.value) ...[
-                const SizedBox(width: Spacing.sm),
-                Icon(
-                  Icons.check_rounded,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ],
-            ],
-          ),
-        );
-      }).toList(growable: false),
+            );
+          })
+          .toList(growable: false),
     );
     if (selectedValue != null && selectedValue != resolvedOption.value) {
       onChanged(selectedValue);
