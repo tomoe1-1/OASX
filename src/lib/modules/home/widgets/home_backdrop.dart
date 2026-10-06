@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:oasx/utils/eye_motion.dart';
 import 'package:oasx/config/design_tokens.dart';
 import 'package:oasx/modules/home/models/home_workbench_layout.dart';
 
@@ -180,7 +182,18 @@ const Color _kFadeLeftEndColor = Color(0xFFFFFFFF);
 /// 上下渐隐带的高度（占窗口高比例）。
 const double _kFadeBandY = 0.10;
 
-class _HomeBackdropState extends State<HomeBackdrop> {
+/// Rest closed, wake slowly, hold open, then close gently once per 18 seconds.
+@visibleForTesting
+double backdropEyeOpening(double seconds) {
+  final t = seconds % 18;
+  if (t < 0.7) return 0;
+  if (t < 4.3) return Curves.easeInOutCubic.transform((t - 0.7) / 3.6);
+  if (t < 16.8) return 1;
+  return 1 - Curves.easeInOutCubic.transform((t - 16.8) / 1.2);
+}
+
+class _HomeBackdropState extends State<HomeBackdrop>
+    with SingleTickerProviderStateMixin {
   /// 正面立绘与星空同在一张宽画幅里，作为主页首选底图。
   static const String _kFullAsset = 'assets/images/main_bg_muse_front_full.png';
 
@@ -206,9 +219,13 @@ class _HomeBackdropState extends State<HomeBackdrop> {
   ui.Image? _art;
   ui.Image? _ambient;
   ui.Image? _fullArt;
+  ui.Image? _closedEyes;
+  List<ui.Image> _eyeFrames = const <ui.Image>[];
+  EyeMotion? _eyeMotion;
+  final _motionClock = _BackdropClock();
+  late final Ticker _motionTicker;
+  double _motionOrigin = 0;
   ui.Codec? _codec;
-  Timer? _motionTimer;
-  double _motionPhase = 0;
 
   /// 动画循环的世代号：dispose 时 +1，循环里的 `await` 返回后发现
   /// 世代变了就退出 —— 这是异步循环最可靠的取消方式。
@@ -240,6 +257,9 @@ class _HomeBackdropState extends State<HomeBackdrop> {
   @override
   void initState() {
     super.initState();
+    _motionTicker = createTicker((elapsed) {
+      _motionClock.advance((_motionOrigin + elapsed.inMicroseconds / 1e6) % 18);
+    });
     unawaited(_load());
     unawaited(_loadAmbient());
   }
@@ -251,18 +271,13 @@ class _HomeBackdropState extends State<HomeBackdrop> {
   }
 
   void _updateMotion() {
-    _motionTimer?.cancel();
-    _motionTimer = null;
+    _motionTicker.stop();
     if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
-      _motionPhase = 0;
+      _motionClock.advance(4.3, stationary: true);
       return;
     }
-    // 低帧率、长周期的轻微漂移，让整幅图随窗口保持 cover 绘制，
-    // 同时避免主页常驻时为装饰持续占用 60fps。
-    _motionTimer = Timer.periodic(const Duration(milliseconds: 83), (_) {
-      if (!mounted) return;
-      setState(() => _motionPhase = (_motionPhase + 1 / 216) % 1);
-    });
+    _motionOrigin = _motionClock.seconds;
+    _motionTicker.start();
   }
 
   Future<void> _loadAmbient() async {
@@ -296,6 +311,12 @@ class _HomeBackdropState extends State<HomeBackdrop> {
       );
       final frame = await fullCodec.getNextFrame();
       fullCodec.dispose();
+      if (!mounted) {
+        frame.image.dispose();
+        return;
+      }
+      await _loadClosedEyes();
+      await _loadEyeFrames(frame.image);
       if (!mounted) {
         frame.image.dispose();
         return;
@@ -372,6 +393,77 @@ class _HomeBackdropState extends State<HomeBackdrop> {
     }
   }
 
+  Future<void> _loadClosedEyes() async {
+    ui.Codec? codec;
+    try {
+      final data = await rootBundle.load(
+        'assets/images/main_bg_muse_front_closed.png',
+      );
+      codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final frame = await codec.getNextFrame();
+      if (!mounted) {
+        frame.image.dispose();
+        return;
+      }
+      setState(() => _closedEyes = frame.image);
+    } catch (error) {
+      debugPrint('[HomeBackdrop] Closed eye asset unavailable: $error');
+    } finally {
+      codec?.dispose();
+    }
+  }
+
+  Future<void> _loadEyeFrames(ui.Image open) async {
+    final frames = <ui.Image>[];
+    try {
+      for (final name in ['quarter', 'half', 'three_quarter']) {
+        final data = await rootBundle.load(
+          'assets/images/main_bg_muse_front_eye_$name.png',
+        );
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        try {
+          frames.add((await codec.getNextFrame()).image);
+        } finally {
+          codec.dispose();
+        }
+      }
+      if (!mounted) {
+        for (final image in frames) {
+          image.dispose();
+        }
+        return;
+      }
+      EyeMotion? motion;
+      if (_closedEyes != null) {
+        try {
+          motion = await EyeMotion.prepareHome([_closedEyes!, ...frames, open]);
+        } catch (error) {
+          debugPrint('[HomeBackdrop] Eye texture preparation failed: $error');
+        }
+      }
+      if (!mounted) {
+        motion?.dispose();
+        for (final image in frames) {
+          image.dispose();
+        }
+        return;
+      }
+      if (motion != null) {
+        for (final image in frames) {
+          image.dispose();
+        }
+        setState(() => _eyeMotion = motion);
+      } else {
+        setState(() => _eyeFrames = frames);
+      }
+    } catch (error) {
+      for (final image in frames) {
+        image.dispose();
+      }
+      debugPrint('[HomeBackdrop] Intermediate eye frames unavailable: $error');
+    }
+  }
+
   /// 逐帧推进循环：以**帧自带的时长**自-paced（100ms/帧由编码写入），
   /// 循环由世代号或 codec 错误终止。
   Future<void> _runAnimation(ui.Codec codec) async {
@@ -418,11 +510,12 @@ class _HomeBackdropState extends State<HomeBackdrop> {
 
   /// 当前是否在播逐帧动画（静态回退时为 false）。
   @visibleForTesting
-  bool get isAnimated => _animated || _motionTimer != null;
+  bool get isAnimated => _animated || _motionTicker.isActive;
 
   @override
   void dispose() {
-    _motionTimer?.cancel();
+    _motionTicker.dispose();
+    _motionClock.dispose();
     _generation++;
     _codec?.dispose();
     for (final image in _graveyard) {
@@ -432,6 +525,11 @@ class _HomeBackdropState extends State<HomeBackdrop> {
     _art?.dispose();
     _ambient?.dispose();
     _fullArt?.dispose();
+    _closedEyes?.dispose();
+    _eyeMotion?.dispose();
+    for (final image in _eyeFrames) {
+      image.dispose();
+    }
     super.dispose();
   }
 
@@ -452,7 +550,10 @@ class _HomeBackdropState extends State<HomeBackdrop> {
                 image: art,
                 ambient: ambient,
                 fullImage: fullArt,
-                motionPhase: _motionPhase,
+                motionClock: _motionClock,
+                closedEyes: _closedEyes,
+                eyeFrames: _eyeFrames,
+                eyeMotion: _eyeMotion,
               ),
             ),
           ),
@@ -463,18 +564,37 @@ class _HomeBackdropState extends State<HomeBackdrop> {
   }
 }
 
+class _BackdropClock extends ChangeNotifier {
+  double seconds = 0;
+  double phase = 0;
+  void advance(double value, {bool stationary = false}) {
+    seconds = value;
+    phase = stationary ? 0 : value / 18;
+    notifyListeners();
+  }
+}
+
 class _BackdropPainter extends CustomPainter {
-  const _BackdropPainter({
+  _BackdropPainter({
     required this.image,
     required this.ambient,
     required this.fullImage,
-    required this.motionPhase,
-  });
+    required this.motionClock,
+    required this.closedEyes,
+
+    required this.eyeFrames,
+    required this.eyeMotion,
+  }) : super(repaint: motionClock);
 
   final ui.Image? image;
   final ui.Image? ambient;
   final ui.Image? fullImage;
-  final double motionPhase;
+  final _BackdropClock motionClock;
+  double get motionPhase => motionClock.phase;
+  final ui.Image? closedEyes;
+  double get eyeOpening => backdropEyeOpening(motionClock.seconds);
+  final List<ui.Image> eyeFrames;
+  final EyeMotion? eyeMotion;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -501,6 +621,7 @@ class _BackdropPainter extends CustomPainter {
         Rect.fromLTWH(left, top, width, height),
         Paint()..filterQuality = FilterQuality.medium,
       );
+      _paintEyes(canvas, full, Rect.fromLTWH(left, top, width, height));
       // 面板下压低高光；右侧正面人物保留更完整的蓝青细节。
       canvas.drawRect(
         Offset.zero & size,
@@ -611,6 +732,51 @@ class _BackdropPainter extends CustomPainter {
     canvas.restore();
   }
 
+  void _paintEyes(Canvas canvas, ui.Image open, Rect destination) {
+    final closed = closedEyes;
+    if (closed == null || eyeOpening >= 1) return;
+    final frames = <ui.Image>[
+      closed,
+      if (eyeFrames.length == 3) ...eyeFrames,
+      open,
+    ];
+    final position = eyeOpening.clamp(0.0, 1.0) * (frames.length - 1);
+    final index = position.floor().clamp(0, frames.length - 2);
+    final mix = position - index;
+    canvas.save();
+    canvas.translate(destination.left, destination.top);
+    canvas.scale(destination.width / 1672, destination.height / 941);
+    if (eyeMotion != null) {
+      eyeMotion!.paint(canvas, eyeOpening);
+      canvas.restore();
+      return;
+    }
+    for (final patch in const [
+      Rect.fromLTWH(1040, 340, 112, 82),
+      Rect.fromLTWH(1200, 305, 112, 90),
+    ]) {
+      canvas.save();
+      canvas.clipRRect(
+        RRect.fromRectAndRadius(patch, const Radius.circular(18)),
+      );
+      for (final (image, alpha) in [
+        (frames[index], 1.0),
+        (frames[index + 1], mix),
+      ]) {
+        canvas.drawImageRect(
+          image,
+          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+          const Rect.fromLTWH(0, 0, 1672, 941),
+          Paint()
+            ..filterQuality = FilterQuality.medium
+            ..color = Color.fromRGBO(255, 255, 255, alpha),
+        );
+      }
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+
   /// 取当前主题的表面色作底。
   ///
   /// 不用 `Theme.of` —— painter 拿不到 context，且底衬只需要
@@ -623,7 +789,10 @@ class _BackdropPainter extends CustomPainter {
       old.image != image ||
       old.ambient != ambient ||
       old.fullImage != fullImage ||
-      old.motionPhase != motionPhase;
+      old.motionClock != motionClock ||
+      old.closedEyes != closedEyes ||
+      old.eyeFrames != eyeFrames ||
+      old.eyeMotion != eyeMotion;
 }
 
 /// 主界面用的半透明面板填充色。

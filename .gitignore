@@ -19,6 +19,19 @@ logs/
 *.before-*
 _backup*/
 
+# ── 测试渲染产物 ────────────────────────────────────────────
+# 眼睛动画类测试会把渲染结果写成 PNG 落在工作目录（仓库根与 src/），不入库
+/closed.png
+/half.png
+/open.png
+/src/eye-*.png
+/src/splash-closed.png
+/src/splash-half.png
+/src/splash-open.png
+/src/splash-quarter.png
+/src/splash-three-quarter.png
+/src/splash-transition.png
+
 # ── Flutter / Dart 构建产物 ────────────────────────────────
 # src/ 是完整 Flutter 工程，以下为生成物，不入库
 src/.dart_tool/

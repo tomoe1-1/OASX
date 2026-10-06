@@ -1,25 +1,30 @@
 {
-  "version": "2.3.0",
-  "build": 26,
-  "revision": "dashboard-six-interactions-20261004+failed-task-actions",
+  "version": "2.4.0",
+  "build": 27,
+  "revision": "dashboard-six-interactions-20261004+failed-task-actions+slow-home-eyes-20261007+slow-splash-eyes+illustrated-eyelids+continuous-eye-motion",
   "flutter": "3.47.5",
   "dart": "3.13.4",
   "platform": "windows-x64",
   "buildMethod": "manual-aot-with-existing-native-runner",
-  "testsPassed": 165,
-  "failedTaskActionRegressionTestsPassed": 35,
-  "dashboardInteractionTestsPassed": 9,
-  "dashboardControllerTestsPassed": 3,
-  "visualCaptureTestsPassed": 1,
-  "existingRegressionTestsPassed": 9,
-  "workbenchResizeScenariosPassed": 5,
-  "workbenchBreakpointTransitionsChecked": 45,
-  "nativeResizeScenariosPassed": 3,
-  "nativeEdgeResizesChecked": 32,
-  "staticAnalysis": "No issues found",
-  "previousVersion": "2.2.0",
-  "appSoSha256": "E6F11A6CB2BF2CC649C59219F134FB67068F0F7873B8BE38C178E7F8BC684B40",
-  "exeSha256": "66D3E845FA4A74164ED9E7276ECFD6D4CC4F50C24C1B3630532306322C68E421",
+  "testsPassed": 170,
+  "previousVersion": "2.3.0",
+  "appSoSha256": "7914D80A3FE94DA107109A3EE7EB772B256C8DC9D16DBF627C646FEC24F52D70",
+  "exeSha256": "2DE9D0711267EC928B014A7FAC9D1515978614004700D0CE9A315118EC5CDDF6",
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
-  "defaultOasBranch": "self"
+  "defaultOasBranch": "self",
+  "eyeMotionTestsPassed": 11,
+  "eyeMotionTestFiles": [
+    "test/eye_motion_test.dart",
+    "test/eye_assets_manifest_test.dart",
+    "test/home_slow_eyes_test.dart",
+    "test/splash_slow_eye_test.dart",
+    "test/home_release_version_test.dart"
+  ],
+  "testFilesPassed": 24,
+  "testFilesTotal": 26,
+  "knownPreexistingFailures": [
+    "args_test（multi_enum 解析，2.1.0 起既有）",
+    "widget_test（Flutter 模板残留，2.1.0 起既有）"
+  ],
+  "staticAnalysis": "analysis server 无法在本机启动（禁止 Dart 创建子进程），改由 AOT 编译 + 全量测试把关"
 }

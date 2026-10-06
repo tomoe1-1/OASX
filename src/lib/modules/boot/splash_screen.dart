@@ -11,6 +11,8 @@
 /// - **锁定青蓝**：不跟随用户主题，保证品牌时刻的色相稳定
 library;
 
+import 'package:oasx/utils/eye_motion.dart';
+
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -209,6 +211,8 @@ class _SplashScreenState extends State<SplashScreen>
   ui.Image? _artClosedWire;
   ui.Image? _artOpenWire;
   ui.Image? _artCornerRepair;
+  List<ui.Image?> _artEyeFrames = const <ui.Image?>[];
+  EyeMotion? _eyeMotion;
 
   Duration get _totalDuration => widget.duration ?? SplashPainter.totalDuration;
 
@@ -239,8 +243,21 @@ class _SplashScreenState extends State<SplashScreen>
       decode(SplashArt.closedWire),
       decode(SplashArt.openWire),
       decode(SplashArt.cornerRepair),
+      decode('assets/splash/girl_eye_quarter.png'),
+      decode('assets/splash/girl_eye_half.png'),
+      decode('assets/splash/girl_eye_three_quarter.png'),
     ]);
+    EyeMotion? motion;
+    final solid = [results[0], ...results.sublist(5), results[1]];
+    if (solid.every((image) => image != null)) {
+      try {
+        motion = await EyeMotion.prepareSplash(solid.cast<ui.Image>());
+      } catch (error) {
+        debugPrint('[SplashScreen] Eye texture preparation failed: $error');
+      }
+    }
     if (!mounted) {
+      motion?.dispose();
       for (final image in results) {
         image?.dispose();
       }
@@ -252,7 +269,14 @@ class _SplashScreenState extends State<SplashScreen>
       _artClosedWire = results[2];
       _artOpenWire = results[3];
       _artCornerRepair = results[4];
+      _eyeMotion = motion;
+      _artEyeFrames = motion == null ? results.sublist(5) : const [];
     });
+    if (motion != null) {
+      for (final image in results.sublist(5)) {
+        image?.dispose();
+      }
+    }
   }
 
   @override
@@ -290,7 +314,8 @@ class _SplashScreenState extends State<SplashScreen>
       _starTicker.start();
 
       if (_task != null) {
-        // ---- 任务模式：进度来自外部任务，不用 controller 自己跑 ----
+        // ---- 任务模式：进度来自外部任务，controller 仅驱动眼睑动画 ----
+        _controller.forward();
         _taskSub = _task!.changes.listen((_) {
           if (!mounted) {
             return;
@@ -337,7 +362,10 @@ class _SplashScreenState extends State<SplashScreen>
     }
     _finishScheduled = true;
     final holdMs = widget.task is StagedSplashTask ? 900 : 400;
-    Timer(Duration(milliseconds: holdMs), () {
+    final remainingMs = (_task?.hasFailed ?? false)
+        ? 0
+        : (_totalDuration.inMilliseconds * (1 - _controller.value)).ceil();
+    Timer(Duration(milliseconds: remainingMs + holdMs), () {
       if (mounted) {
         _finish();
       }
@@ -371,6 +399,17 @@ class _SplashScreenState extends State<SplashScreen>
     _focusNode.dispose();
     _starTicker.dispose();
     _controller.dispose();
+    _eyeMotion?.dispose();
+    for (final image in <ui.Image?>[
+      _artClosed,
+      _artOpen,
+      _artClosedWire,
+      _artOpenWire,
+      _artCornerRepair,
+      ..._artEyeFrames,
+    ]) {
+      image?.dispose();
+    }
     super.dispose();
   }
 
@@ -439,6 +478,7 @@ class _SplashScreenState extends State<SplashScreen>
                         willChange: true,
                         painter: SplashPainter(
                           progress: progress,
+                          eyeProgress: _controller.value,
                           palette: palette,
                           stars: _starField.stars,
                           starTime: _starTime,
@@ -452,6 +492,8 @@ class _SplashScreenState extends State<SplashScreen>
                           artClosedWire: _artClosedWire,
                           artOpenWire: _artOpenWire,
                           artCornerRepair: _artCornerRepair,
+                          artEyeFrames: _artEyeFrames,
+                          eyeMotion: _eyeMotion,
                           panelData: panel,
                           // 部署模式跳过开场线稿期：切模式时本层会因 key
                           // 变化而重建，不偏移就会从深空重播一遍。

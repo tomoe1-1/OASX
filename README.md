@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.3.0** —— 失败任务行补齐与普通任务一致的快捷操作，可直接「立即执行 / 等待顺延 / 打开参数」；修复联动配置下快捷调度误用外层脚本名导致的写错任务与失败误报。
+**当前版本：v2.4.0** —— 主页背景与启动页的少女会缓慢睁眼：眼睑按 5 张预渲染姿态图做连续性插值与网格变形，18 秒一轮；系统开启「减少动态效果」时保持睁眼静止。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.3.0 --build-number 26
+flutter build windows --release --build-name 2.4.0 --build-number 27
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.3.0 --build-number 26
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.3.0` / `26` |
+| version / build | `2.4.0` / `27` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.3.0 --build-number 26
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `E6F11A6CB2BF2CC649C59219F134FB67068F0F7873B8BE38C178E7F8BC684B40` |
-| `oasx.exe` | `66D3E845FA4A74164ED9E7276ECFD6D4CC4F50C24C1B3630532306322C68E421` |
+| `data/app.so` | `7914D80A3FE94DA107109A3EE7EB772B256C8DC9D16DBF627C646FEC24F52D70` |
+| `oasx.exe` | `2DE9D0711267EC928B014A7FAC9D1515978614004700D0CE9A315118EC5CDDF6` |
 
-本机手工测试链（`frontend_server` + `flutter_tester`）跑通全部 21 个测试文件，共 **165 项通过**：新增 2 项失败任务操作回归（三按钮路由与窄窗口自适应、联动配置逐一下发与失败传播）、9 项 Dashboard 交互测试（拖拽、放大、联动、吸顶、抽屉与 320/480/760 窄窗口布局）、3 项统计控制器测试与 1 项真实统计页渲染检查，其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏与实际工作台。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 / 2.2.0 基线对照失败方式一致，与本次改动无关。Dashboard 尚未以当前后端数据做人工鼠标操作验收。
+本机手工测试链（`frontend_server` + `flutter_tester`）跑通 26 个测试文件中的 24 个，共 **170 项通过**：新增 11 项眼睛动画回归（眼睑高度逐 0.01 秒扫描的连续性、姿态图资源登记、主页与启动页睁眼时间线、真实素材渲染、版本号三处来源一致），其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏、实际工作台与统计 Dashboard。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 / 2.2.0 / 2.3.0 基线对照失败方式一致，与本次改动无关。眼睛动画为渲染层改动，尚未以人工肉眼逐帧验收。
 
 ## 自动更新
 
@@ -134,6 +134,17 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.4.0 眼睛动画
+
+主页背景与启动页的少女从这一版起会真正把眼睛睁开 —— 不是整张图淡入淡出地切换，而是眼睑本身沿连续曲线抬起。
+
+- **主页**：18 秒一轮 —— 0.7 秒闭眼静止、3.6 秒缓慢睁开、12.5 秒保持、1.2 秒闭合。
+- **启动页**：睁眼由独立 controller 驱动，与进度解耦；任务模式下进度仍来自外部任务，收尾计时改为「剩余动画时长 + 停留」。
+- **减少动态效果**：停在睁开状态并保持静止，内容正确、只去掉运动。
+- **实现**：5 张预渲染姿态图 + 单调 Hermite 插值（位置与斜率同时约束，不 overshoot）+ 网格变形（只移动夹着眼睑的窄带，周围头发皮肤不动）。
+
+新增 7 张眼睑姿态 PNG。详细说明见 [2.4.0 眼睛动画](./docs/2.4.0眼睛动画.md)。
 
 ## 2.3.0 失败任务操作
 

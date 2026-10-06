@@ -18,7 +18,7 @@
 /// | 0.04–0.26 | 少女线稿自暗转亮（快，一笔带过） |
 /// | 0.10–0.34 | 品牌字标点亮（部署模式；品牌模式为 0.56–0.90） |
 /// | 0.24–0.58 | 扫描光带自上而下，立绘实体化 |
-/// | 0.60–0.94 | **睁眼**（占 0.34，慢）—— 眼区扫描 + 瞳孔渐亮 |
+/// | 0.54–0.94 | **睁眼**（占 0.40，3.6秒）—— 眼区扫描 + 瞳孔渐亮 |
 /// | 0.68–0.99 | 虹膜高光炸开（覆盖整个睁眼过程） |
 /// | 0.56–0.90 | 部署进度面板入场 |
 /// | 0.96–1.00 | 收束高光，准备交棒 |
@@ -29,8 +29,10 @@
 /// 冲击波扩散」三样显式信号，构成一个真正可读的睁眼事件。
 ///
 /// 品牌模式下 [progress] 由 `AnimationController` 按固定时长推进；
-/// 部署模式下由真实部署阶段驱动 —— 装得慢就演得慢。
+/// 部署面板由真实部署阶段驱动，眼睑由独立时钟保证缓慢开启。
 library;
+
+import 'package:oasx/utils/eye_motion.dart';
 
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -77,6 +79,9 @@ class SplashPainter extends CustomPainter {
     required this.artClosedWire,
     required this.artOpenWire,
     this.artCornerRepair,
+    this.eyeProgress,
+    this.artEyeFrames = const <ui.Image?>[],
+    this.eyeMotion,
     this.panelData,
     this.progressBias = 0.0,
     this.skippable = true,
@@ -84,6 +89,9 @@ class SplashPainter extends CustomPainter {
 
   /// 整体进度 0–1
   final double progress;
+  final double? eyeProgress;
+  final List<ui.Image?> artEyeFrames;
+  final EyeMotion? eyeMotion;
 
   final SplashPalette palette;
 
@@ -142,10 +150,10 @@ class SplashPainter extends CustomPainter {
 
   /// 品牌模式下的固定时长（部署模式不用）
   ///
-  /// 5.6s 的分配（按比例）：线稿 0.04–0.26 ≈ 1.2s，
-  /// 实体化 0.24–0.58 ≈ 1.9s，睁眼 0.60–0.94 ≈ 1.9s ——
+  /// 9.0s 的分配（按比例）：线稿 0.04–0.26 ≈ 2.0s，
+  /// 实体化 0.24–0.58 ≈ 3.1s，睁眼 0.54–0.94 = 3.6s ——
   /// 睁眼是整段的主角，必须慢且有余韵。
-  static const Duration totalDuration = Duration(milliseconds: 5600);
+  static const Duration totalDuration = Duration(milliseconds: 9000);
 
   /// 实际用于取样的进度 = 外部进度按 [progressBias] 拉伸到剩余区间。
   ///
@@ -260,6 +268,76 @@ class SplashPainter extends CustomPainter {
     );
   }
 
+  double _eyeSegment(double begin, double end) {
+    final p = reduceMotion ? 1.0 : (eyeProgress ?? _p).clamp(0.0, 1.0);
+    return ((p - begin) / (end - begin)).clamp(0.0, 1.0);
+  }
+
+  @visibleForTesting
+  double get eyeOpening => _easeInOut(_eyeSegment(0.54, 0.94));
+
+  void _pasteOpening(
+    Canvas canvas,
+    ui.Image? closed,
+    ui.Image? open,
+    Rect destination,
+    double opacity,
+    double opening,
+  ) {
+    if (closed == null || open == null || opening >= 1) {
+      _pastePlus(canvas, open ?? closed, destination, opacity);
+      return;
+    }
+    if (opacity <= 0.001) return;
+    canvas.saveLayer(
+      destination,
+      Paint()
+        ..blendMode = BlendMode.plus
+        ..color = Color.fromRGBO(255, 255, 255, opacity.clamp(0.0, 1.0)),
+    );
+    canvas.translate(destination.left, destination.top);
+    canvas.scale(destination.width / 1200, destination.height / 800);
+    const full = Rect.fromLTWH(0, 0, 1200, 800);
+    void draw(ui.Image image, [double alpha = 1]) => canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      full,
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..color = Color.fromRGBO(255, 255, 255, alpha),
+    );
+    draw(closed);
+    draw(open, opening.clamp(0.0, 1.0));
+    if (eyeMotion != null) {
+      eyeMotion!.paint(canvas, opening);
+      canvas.restore();
+      return;
+    }
+    final hasFrames =
+        artEyeFrames.length == 3 && artEyeFrames.every((f) => f != null);
+    final frames = <ui.Image>[
+      closed,
+      if (hasFrames) ...artEyeFrames.cast<ui.Image>(),
+      open,
+    ];
+    final position = opening.clamp(0.0, 1.0) * (frames.length - 1);
+    final index = position.floor().clamp(0, frames.length - 2);
+    final mix = position - index;
+    canvas.save();
+    canvas.clipRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(674, 245, 104, 98),
+        const Radius.circular(12),
+      ),
+    );
+    // Blend adjacent illustrated eyelids, including their attached eyelashes.
+    // The original iris is never revealed through an artificial aperture.
+    draw(frames[index]);
+    draw(frames[index + 1], mix);
+    canvas.restore();
+    canvas.restore();
+  }
+
   void _paintArt(Canvas canvas, Size size) {
     final r = _artRect(size);
 
@@ -269,30 +347,28 @@ class SplashPainter extends CustomPainter {
     final eye = Offset(r.left + r.width * eyeU, r.top + r.height * eyeV);
 
     // ---- 睁眼时序（三段，慢速）----
-    // liftT  : 眼皮抬起的动作（0.60→0.86 压缩到 0.58→0.90，共 2.0s）——
+    // liftT  : 眼皮抬起的动作（0.60→0.86 压缩到 0.54→0.94，共 3.6s）——
     //          这是整段动画的主角，用 easeInOut 让「起—中—收」都平滑，
     //          没有突变拐点，人眼才能读出「眼皮慢慢抬起」而不是「闪一下」。
     // shineT : 瞳孔渐亮 + 收缩（比 liftT 晚一拍开始，形成「先睁、后亮」的层次）
     // scanT  : 眼区扫描光带（横跨中段，扫过即「激活」）
-    final liftT = _easeInOut(_seg(0.58, 0.90));
-    final shineT = _easeOut(_seg(0.72, 0.96));
-    final scanT = _seg(0.64, 0.92);
+    final liftT = eyeOpening;
+    final shineT = _easeOut(_eyeSegment(0.76, 0.98));
+    final scanT = _eyeSegment(0.60, 0.94);
 
     // ---- 1. 线稿层：勾勒完成得快，睁眼时再切一张 ----
     final wireIn = _easeOut(_seg(0.04, 0.26));
-    _pastePlus(canvas, artClosedWire, r, wireIn * (1 - liftT) * 0.95);
-    _pastePlus(canvas, artOpenWire, r, wireIn * liftT * 0.95);
+    final solidIn = _easeInOut(_seg(0.24, 0.58));
+    _pastePlus(canvas, artClosedWire, r, wireIn * 0.95 * (1 - solidIn));
 
     // ---- 2. 实体层：扫描线以上为实体 ----
-    final solidIn = _easeInOut(_seg(0.24, 0.58));
     final solidOpacity = solidIn * 0.92;
     if (solidOpacity > 0.001) {
       final front = _easeOut(solidIn) * (size.height * 1.15);
       // 实体图的深空底也参与加亮。硬裁剪会在扫描线下方形成整幅画面
       // 的黑色矩形接缝；在独立图层内用渐隐带过渡，再叠回背景。
       canvas.saveLayer(Offset.zero & size, Paint()..blendMode = BlendMode.plus);
-      _pastePlus(canvas, artClosed, r, solidOpacity * (1 - liftT));
-      _pastePlus(canvas, artOpen, r, solidOpacity * liftT);
+      _pasteOpening(canvas, artClosed, artOpen, r, solidOpacity, liftT);
       final repair = artCornerRepair;
       if (repair != null) {
         // 原始实体帧右下角的模糊矩形只在这一角修复。两道柔边让
@@ -411,7 +487,7 @@ class SplashPainter extends CustomPainter {
     }
 
     // ---- 5. 睁眼冲击波：一次性圆环扩散 ----
-    final burst = _seg(0.88, 1.0);
+    final burst = _eyeSegment(0.94, 1.0);
     if (burst > 0 && burst < 1) {
       final a = math.sin(burst * math.pi) * 0.45;
       final ringR = size.height * (0.04 + 0.16 * burst);
@@ -829,6 +905,9 @@ class SplashPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant SplashPainter old) {
     return old.progress != progress ||
+        old.eyeProgress != eyeProgress ||
+        old.artEyeFrames != artEyeFrames ||
+        old.eyeMotion != eyeMotion ||
         old.progressBias != progressBias ||
         old.starTime != starTime ||
         old.titleText != titleText ||
