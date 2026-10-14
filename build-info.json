@@ -1,15 +1,15 @@
 {
-  "version": "2.4.0",
-  "build": 27,
-  "revision": "dashboard-six-interactions-20261004+failed-task-actions+slow-home-eyes-20261007+slow-splash-eyes+illustrated-eyelids+continuous-eye-motion",
+  "version": "2.4.1",
+  "build": 28,
+  "revision": "dashboard-six-interactions-20261004+failed-task-actions+slow-home-eyes-20261007+slow-splash-eyes+illustrated-eyelids+continuous-eye-motion+only-enabled-failures-20261014",
   "flutter": "3.47.5",
   "dart": "3.13.4",
   "platform": "windows-x64",
   "buildMethod": "manual-aot-with-existing-native-runner",
   "testsPassed": 170,
-  "previousVersion": "2.3.0",
-  "appSoSha256": "7914D80A3FE94DA107109A3EE7EB772B256C8DC9D16DBF627C646FEC24F52D70",
-  "exeSha256": "2DE9D0711267EC928B014A7FAC9D1515978614004700D0CE9A315118EC5CDDF6",
+  "previousVersion": "2.4.0",
+  "appSoSha256": "4D70E3B6DDE39D244B61AC3799413820E1C3FE65314540AA118293CBCCFA86D8",
+  "exeSha256": "1B2161A4F42A51E4A15B462126D75B872FF4D29ABC0580B71464B725DE8FB288",
   "defaultOasRepository": "git@github-oas:tomoe1-1/OAS-tomoe.git",
   "defaultOasBranch": "self",
   "eyeMotionTestsPassed": 11,
@@ -19,6 +19,10 @@
     "test/home_slow_eyes_test.dart",
     "test/splash_slow_eye_test.dart",
     "test/home_release_version_test.dart"
+  ],
+  "enabledFailureListTestsPassed": 11,
+  "enabledFailureListTestFiles": [
+    "test/home_workbench_resize_test.dart"
   ],
   "testFilesPassed": 24,
   "testFilesTotal": 26,

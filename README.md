@@ -3,7 +3,7 @@
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
 基于 Flutter Windows 构建。
 
-**当前版本：v2.4.0** —— 主页背景与启动页的少女会缓慢睁眼：眼睑按 5 张预渲染姿态图做连续性插值与网格变形，18 秒一轮；系统开启「减少动态效果」时保持睁眼静止。
+**当前版本：v2.4.1** —— 失败任务队列只列出启用中的任务：手动停用的记录保留在数据里，但不再占列表、不进重试队列。2.4.0 起主页与启动页的少女会缓慢睁眼（眼睑按 5 张预渲染姿态图做连续性插值与网格变形，18 秒一轮）。
 
 后续每次修复将补丁版本递增 `0.0.1`，同时递增构建号。
 
@@ -78,7 +78,7 @@ OASX/                            # 仓库根目录 = 发行目录
 ```powershell
 cd src
 flutter pub get
-flutter build windows --release --build-name 2.4.0 --build-number 27
+flutter build windows --release --build-name 2.4.1 --build-number 28
 ```
 
 产物位于 `src\build\windows\x64\runner\Release`，把该目录下全部运行文件复制到发行目录即可。
@@ -101,7 +101,7 @@ flutter build windows --release --build-name 2.4.0 --build-number 27
 
 | 字段 | 值 |
 |---|---|
-| version / build | `2.4.0` / `27` |
+| version / build | `2.4.1` / `28` |
 | 工具链 | Flutter 3.47.5 / Dart 3.13.4 |
 | 平台 | windows-x64 |
 
@@ -109,10 +109,10 @@ flutter build windows --release --build-name 2.4.0 --build-number 27
 
 | 文件 | SHA256 |
 |---|---|
-| `data/app.so` | `7914D80A3FE94DA107109A3EE7EB772B256C8DC9D16DBF627C646FEC24F52D70` |
-| `oasx.exe` | `2DE9D0711267EC928B014A7FAC9D1515978614004700D0CE9A315118EC5CDDF6` |
+| `data/app.so` | `4D70E3B6DDE39D244B61AC3799413820E1C3FE65314540AA118293CBCCFA86D8` |
+| `oasx.exe` | `1B2161A4F42A51E4A15B462126D75B872FF4D29ABC0580B71464B725DE8FB288` |
 
-本机手工测试链（`frontend_server` + `flutter_tester`）跑通 26 个测试文件中的 24 个，共 **170 项通过**：新增 11 项眼睛动画回归（眼睑高度逐 0.01 秒扫描的连续性、姿态图资源登记、主页与启动页睁眼时间线、真实素材渲染、版本号三处来源一致），其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏、实际工作台与统计 Dashboard。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 / 2.2.0 / 2.3.0 基线对照失败方式一致，与本次改动无关。眼睛动画为渲染层改动，尚未以人工肉眼逐帧验收。
+本机手工测试链（`frontend_server` + `flutter_tester`）跑通 26 个测试文件中的 24 个，共 **170 项通过**：本次更新工作台失败任务回归 11 项（停用任务不渲染、计数归零并显示「暂无失败任务」、数据层仍保留记录、重新启用后回到列表并恢复重试时间），另有 11 项眼睛动画回归（眼睑高度逐 0.01 秒扫描的连续性、姿态图资源登记、主页与启动页睁眼时间线、真实素材渲染、版本号三处来源一致），其余覆盖当前/下个任务、失败任务选择、实时状态、启动页、主页背景、窗口几何、OAS 目录恢复、标题栏、实际工作台与统计 Dashboard。另有 2 项为**仓库既有失败**（`args_test` 的 multi_enum 解析、Flutter 模板残留的 `widget_test`），与 2.1.0 / 2.2.0 / 2.3.0 / 2.4.0 基线对照失败方式一致，与本次改动无关。眼睛动画为渲染层改动，尚未以人工肉眼逐帧验收。
 
 ## 自动更新
 
@@ -134,6 +134,16 @@ https://api.github.com/repos/tomoe1-1/OASX/releases/latest
 - 恢复**左上角应用图标**
 
 功能逻辑与操作路径未变，从 1.x 升级无学习成本。历史版本见 [Releases](../../releases)。
+
+## 2.4.1 失败任务列表
+
+失败任务队列从这一版起只显示**启用中**的任务：
+
+- 手动停用（暂停）的失败任务不再占一行，标题「失败任务（N）」的计数与列表口径一致。
+- 记录仍保留在数据层，不会被清空；重新启用后回到列表，并显示原来的重试时间。
+- 不再对停用的任务显示「下次重试」这种已经不成立的时间。
+
+详细说明见 [2.4.1 失败任务列表](./docs/2.4.1失败任务列表.md)。
 
 ## 2.4.0 眼睛动画
 

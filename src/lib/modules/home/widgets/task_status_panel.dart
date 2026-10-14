@@ -60,6 +60,10 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
     return Obx(() {
       final dragPayload = widget.controller.activeDragPayload.value;
       final quickScheduleLocked = widget.controller.isBulkQuickScheduling;
+      // Keep paused records in the model, but exclude them from the retry queue.
+      final failedTasks = widget.scriptModel.failedTaskList
+          .where((task) => task.enabled)
+          .toList();
       final rawTasks = _collectTasks(widget.scriptModel);
       _pruneHiddenTaskIds(rawTasks);
       final visibleTasks = rawTasks
@@ -109,7 +113,7 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              '失败任务（${widget.scriptModel.failedTaskList.length}）',
+              '失败任务（${failedTasks.length}）',
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ),
@@ -122,14 +126,14 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
           ),
           const SizedBox(height: Spacing.sm),
           Expanded(
-            child: widget.scriptModel.failedTaskList.isEmpty
+            child: failedTasks.isEmpty
                 ? const Center(child: Text('暂无失败任务'))
                 : ListView.separated(
                     key: const PageStorageKey<String>('home-failed-task-list'),
-                    itemCount: widget.scriptModel.failedTaskList.length,
+                    itemCount: failedTasks.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
-                      final retry = widget.scriptModel.failedTaskList[index];
+                      final retry = failedTasks[index];
                       final taskName = retry.taskName.value;
                       final canQuickSchedule =
                           retry.enabled &&
@@ -173,9 +177,7 @@ class _TaskStatusPanelState extends State<TaskStatusPanel> {
                                       ).textTheme.labelLarge,
                                     ),
                                     Text(
-                                      retry.enabled
-                                          ? '下次重试：${retry.nextRun.value}'
-                                          : '已停用，重试暂停\n原重试时间：${retry.nextRun.value}',
+                                      '下次重试：${retry.nextRun.value}',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.labelMedium,

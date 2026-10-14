@@ -411,7 +411,10 @@ void main() {
       TaskItemModel('tomoe', 'Orochi', '2026-10-04 20:00:00', enabled: false),
     ]);
     await tester.pumpAndSettle();
-    expectQuickActionsDisabled();
+    expect(row, findsNothing);
+    expect(find.text('失败任务（0）'), findsOneWidget);
+    expect(find.text('暂无失败任务'), findsOneWidget);
+    expect(model.failedTaskList, hasLength(1));
     model.failedTaskList.assignAll([
       TaskItemModel('tomoe', 'Orochi', '2026-10-04 20:00:00'),
     ]);
@@ -442,18 +445,36 @@ void main() {
     final model = Get.find<ScriptService>().findScriptModel('tomoe')!;
     model.failedTaskList.assignAll([
       TaskItemModel('tomoe', 'Orochi', '2026-10-02 14:00:00'),
+      TaskItemModel('tomoe', 'Duel', '2026-10-02 15:00:00', enabled: false),
     ]);
     await tester.pumpWidget(_workbench(controller));
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.textContaining('失败任务'), findsOneWidget);
+    expect(find.text('失败任务（1）'), findsOneWidget);
+    expect(find.byKey(const ValueKey('failed-task::Duel')), findsNothing);
+    expect(find.textContaining('2026-10-02 15:00:00'), findsNothing);
+    expect(model.failedTaskList, hasLength(2));
     expect(find.text('下次重试：2026-10-02 14:00:00'), findsOneWidget);
     expect(tester.takeException(), isNull);
     for (final size in [const Size(1000, 700), const Size(700, 600)]) {
       await resize(tester, size.width, size.height);
       expect(find.text('下次重试：2026-10-02 14:00:00'), findsOneWidget);
     }
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Duel', '2026-10-02 15:00:00', enabled: false),
+    ]);
+    await tester.pump();
+    expect(find.text('暂无失败任务'), findsOneWidget);
+    expect(find.text('失败任务（0）'), findsOneWidget);
+    model.failedTaskList.assignAll([
+      TaskItemModel('tomoe', 'Duel', '2026-10-02 15:00:00'),
+    ]);
+    await tester.pump();
+    expect(find.text('失败任务（1）'), findsOneWidget);
+    expect(find.text('下次重试：2026-10-02 15:00:00'), findsOneWidget);
     model.failedTaskList.clear();
     await tester.pump();
+    expect(find.text('失败任务（0）'), findsOneWidget);
     expect(find.text('暂无失败任务'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
