@@ -1,7 +1,7 @@
 # OASX 2.x
 
 [OnmyojiAutoScript](https://github.com/tomoe1-1/OnmyojiAutoScript) 的**桌面控制端**，
-基于 Flutter Windows 构建。
+基于 Flutter Windows 构建。  交流 QQ 群：878757359
 
 **当前版本：v2.4.1** —— 失败任务队列只列出启用中的任务：手动停用的记录保留在数据里，但不再占列表、不进重试队列。2.4.0 起主页与启动页的少女会缓慢睁眼（眼睑按 5 张预渲染姿态图做连续性插值与网格变形，18 秒一轮）。
 
